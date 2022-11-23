@@ -12,17 +12,20 @@ class EditorGraphBuilder:
 
         self.root = None
         self.script_nodes = None
+        self.contexts = []
 
     def _empty_script_node_chain(self, n: int):
         last = None
         root = None
         for i in range(n):
+            
             node = create_script_node(f"Script Node {i}", (i * 200, 0), parent=self.id)
             
             if last is not None:
                 link = f"{last}.Out", f"{node}.In"
                 self._link_callback(last, link)
             else:
+                dpg.set_item_label(node, "Root")
                 root = node
         
             last = node
@@ -31,14 +34,17 @@ class EditorGraphBuilder:
 
     # callback runs when user attempts to connect attributes
     def _link_callback(self, sender, link):
+        sender = int(link[0].split(".")[0], 10)
+        receiver = int(link[1].split(".")[0], 10)
         self.script_nodes[sender] = link
-        self.script_nodes[int(link[1].split(".")[0], 10)] = None
+        self.script_nodes[receiver] = None
 
         # app_data -> (link_id1, link_id2)
-        dpg.add_node_link(link[0], link[1])
+        dpg.add_node_link(link[0], link[1], label=link, parent=self.id)
 
     # callback runs when user attempts to disconnect attributes
     def _delink_callback(self, sender, app_data):
+        print("DELINK", sender)
         self.script_nodes[sender] = None
         # app_data -> link_id
         dpg.delete_item(app_data)
@@ -49,13 +55,18 @@ class EditorGraphBuilder:
         self.script_nodes[new_node] = None
 
     # delete selected node
-    def delete_node(self, sender, app_data):
+    def delete_selection(self, sender, app_data):
+        links = dpg.get_selected_links(self.id)
+        for link in links:
+            n1 = int(dpg.get_item_label(link).split(",")[0].strip("(").strip('\'').split('.')[0], 10)
+            self._delink_callback(n1, link)
+
         nodes = dpg.get_selected_nodes(self.id)
         for node in nodes:
             if node == self.root:
                 self.root = self.script_nodes[node][1]
             dpg.delete_item(node)
-
+        
     def execute(self, sender, app_data):
         print("Executing Script Nodes")
         
@@ -85,18 +96,16 @@ class EditorGraphBuilder:
     def build(self):
         self.script_nodes = {}
 
-        # place two children side by side
         with dpg.window(label="Editor", width=self.size[0], height=self.size[1], no_bring_to_front_on_focus=True, on_close=self._close_callback):
-            # use a table to create two columns
             with dpg.group():
                 with dpg.group(horizontal=True):
                     with dpg.group():
                         dpg.add_button(label="Execute", callback=self.execute)
                         dpg.add_button(label="Add", callback=self.add_new_node)
-                        dpg.add_button(label="Delete", callback=self.delete_node)
+                        dpg.add_button(label="Delete", callback=self.delete_selection)
 
                     with dpg.node_editor(callback=self._link_callback, 
-                            delink_callback=self._delink_callback,
+                            
                             height=self.size[1] - 50
                     ) as editor_id:
                         self.id = editor_id
@@ -111,10 +120,3 @@ class EditorGraphBuilder:
                             no_close=True
             ):
                 dpg.add_text(tag="Execution.Output")
-
-        # if os.name == "nt":
-        #     hwnd = win32gui.FindWindow('Cypress Output', None)
-        #     win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 100, 100, 300, 200, 0)
-        # elif os.name == "posix":
-        #     # set window to always on top
-        #     glfw.glfwSetWindowPos(dpg.get_viewport_data().window, 100, 100)
