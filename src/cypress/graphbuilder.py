@@ -1,5 +1,7 @@
-from typing_extensions import Self
+import os
 import dearpygui.dearpygui as dpg
+import pyglfw.pyglfw as glfw
+
 from cypress.node.script_node import create_script_node
 
 
@@ -44,30 +46,60 @@ class EditorGraphBuilder:
     def execute(self, sender, app_data):
         print("Executing Script Nodes")
         
+        # create a python context for all nodes
+        context = {'Final': None}
+
         root = self.root
         current = root
         while current is not None:
             code = dpg.get_value(f"{current}.Code")
-            print(current, code)
+            # execute code
+            exec(code, context)
 
             link = self.script_nodes[current]
             if link is not None:
                 current = int(link[1].split(".")[0], 10)
             else:
                 break
+        
+        # Update output window
+        dpg.set_value("Execution.Output", context['Final'])
+
+    def _close_callback(self):
+        # close the window
+        dpg.stop_dearpygui()
 
     def build(self):
         self.script_nodes = {}
 
         # place two children side by side
-        with dpg.window(label="Editor", width=self.size[0], height=self.size[1]) as w_id:
+        with dpg.window(label="Editor", width=self.size[0], height=self.size[1], no_bring_to_front_on_focus=True, on_close=self._close_callback):
             # use a table to create two columns
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="Execute", callback=self.execute)
+            with dpg.group():
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="Execute", callback=self.execute)
+                        # add a text box for execution output
 
-                with dpg.node_editor(callback=self._link_callback, 
-                        delink_callback=self._delink_callback
-                ) as editor_id:
-                    self.id = editor_id
-                    self.root = self._empty_script_node_chain(3)
-            
+                    with dpg.node_editor(callback=self._link_callback, 
+                            delink_callback=self._delink_callback,
+                            height=self.size[1] - 50
+                    ) as editor_id:
+                        self.id = editor_id
+                        self.root = self._empty_script_node_chain(3)
+
+            out_w = self.size[0]/2
+            out_h = self.size[1]/4
+            with dpg.window(label="Cypress Output", 
+                            width=out_w, 
+                            height=out_h, 
+                            pos=(self.size[0]-out_w, self.size[1]-out_h),
+                            no_close=True
+            ):
+                dpg.add_text(tag="Execution.Output")
+
+        # if os.name == "nt":
+        #     hwnd = win32gui.FindWindow('Cypress Output', None)
+        #     win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 100, 100, 300, 200, 0)
+        # elif os.name == "posix":
+        #     # set window to always on top
+        #     glfw.glfwSetWindowPos(dpg.get_viewport_data().window, 100, 100)
