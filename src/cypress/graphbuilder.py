@@ -17,7 +17,7 @@ class EditorGraphBuilder:
         last = None
         root = None
         for i in range(n):
-            node = create_script_node(f"Script Node {i}", (i * 200, 0))
+            node = create_script_node(f"Script Node {i}", (i * 200, 0), parent=self.id)
             
             if last is not None:
                 link = f"{last}.Out", f"{node}.In"
@@ -42,6 +42,19 @@ class EditorGraphBuilder:
         self.script_nodes[sender] = None
         # app_data -> link_id
         dpg.delete_item(app_data)
+
+    def add_new_node(self, sender, app_data):
+        pos = self.size[0] / 2, self.size[1] / 2
+        new_node = create_script_node("Script Node", pos, parent=self.id)
+        self.script_nodes[new_node] = None
+
+    # delete selected node
+    def delete_node(self, sender, app_data):
+        nodes = dpg.get_selected_nodes(self.id)
+        for node in nodes:
+            if node == self.root:
+                self.root = self.script_nodes[node][1]
+            dpg.delete_item(node)
 
     def execute(self, sender, app_data):
         print("Executing Script Nodes")
@@ -77,8 +90,10 @@ class EditorGraphBuilder:
             # use a table to create two columns
             with dpg.group():
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Execute", callback=self.execute)
-                        # add a text box for execution output
+                    with dpg.group():
+                        dpg.add_button(label="Execute", callback=self.execute)
+                        dpg.add_button(label="Add", callback=self.add_new_node)
+                        dpg.add_button(label="Delete", callback=self.delete_node)
 
                     with dpg.node_editor(callback=self._link_callback, 
                             delink_callback=self._delink_callback,
