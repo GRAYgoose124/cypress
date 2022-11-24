@@ -27,13 +27,13 @@ class ScriptGraph:
         
         return next_links
 
-
     def get_prev_links(self, this_node):
         prev_links = []
         for n, links in self.script_nodes.items():
             for link in links:
                 l0, l1 = parse_link_to_ints(link)
                 if l1 == this_node:
+                    # prob should use l0
                     prev_links.append(n)
 
         return prev_links
@@ -84,13 +84,14 @@ class ExecutableGraph(ScriptGraph):
         try:
             exec(code, context)
         except NameError:
+            print(f"NameError {context['Final']=}")
             return context
 
 
         links = self.get_next_links(current)
         print(f"{current=} next {links}")
         for node in links:
-            self.execute_chain(node, ctx)
+            self.execute_chain(node, context)
     
         return context
 
@@ -100,12 +101,16 @@ class ExecutableGraph(ScriptGraph):
         # TODO: Execute all contexts which flow into a final node.
         # Later MIMO will be supported.
         for roots in self.chains:
-            context = {}
+            context = None
             if isinstance(roots, int):
                 context = self.execute_chain(roots)
             else:
+                context = None
                 for root in roots:
-                    context.update(self.execute_chain(root))
+                    if context is None:
+                        context = self.execute_chain(root)
+                    else:
+                        context.update(self.execute_chain(root, context))
 
             contexts.append(context)
 

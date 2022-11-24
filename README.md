@@ -1,6 +1,15 @@
 # Cypress
 
-Cypress is a simple node-based script editor.
+Cypress is a simple node-based Python editor.
 
-## TODO:
-- gather all chains into execution node
+It utilizes [dearpygui](https://github.com/hoffstadt/DearPyGui) for the node editor and windowing system.
+
+## Installation
+    > poetry install
+### Run
+    > cypress
+
+## To-do
+- `asyncio` nodes
+- node `ABCMeta`
+- tests
