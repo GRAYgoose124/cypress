@@ -3,6 +3,24 @@ import dearpygui.dearpygui as dpg
 from cypress.node.script_node import create_script_node
 from cypress.graph_editor.graph import ExecutableGraph
 
+def link_to_sender_receiver(link):
+    link = link.split("\'")
+
+    sender = link[1]
+    receiver = link[3]
+
+    return sender, receiver
+
+def parse_link_to_ints(link):
+    sender = int(link[0].split(".")[0], 10)
+    receiver = int(link[1].split(".")[0], 10)
+
+    return sender, receiver
+
+def parse_link_ints_to_str(link):
+    sender_id, receiver_id = link
+    return f"{sender_id}.Out", f"{receiver_id}.In"
+
 
 class Editor:
     def __init__(self, window_size):
@@ -18,23 +36,27 @@ class Editor:
 
 
     def _link_callback(self, sender, link):
-        sender = int(link[0].split(".")[0], 10)
-        receiver = int(link[1].split(".")[0], 10)
-        self.G.script_nodes[sender] = link
-        self.G.script_nodes[receiver] = None
+        sender, receiver = parse_link_to_ints(link)
+        self.G.add_link(sender, receiver, link)
 
         # app_data -> (link_id1, link_id2)
         dpg.add_node_link(link[0], link[1], label=link, parent=self.id)
 
     def _delink_callback(self, sender, app_data):
-        self.G.script_nodes[sender] = None
+        link = dpg.get_item_label(app_data)
+        
+        link = link_to_sender_receiver(link)
+        link = parse_link_to_ints(link)
+        link = parse_link_ints_to_str(link)
+    
+        self.G.script_nodes[sender].remove(link)
         # app_data -> link_id
         dpg.delete_item(app_data)
 
     def _add_new_node(self, sender, app_data):
         pos = self.size[0] / 2, self.size[1] / 2
         new_node = create_script_node("Script Node", pos, parent=self.id)
-        self.G.script_nodes[new_node] = None
+        self.G.script_nodes[new_node] = []
 
     # delete selected node
     def _delete_selection(self, sender, app_data):
@@ -58,20 +80,14 @@ class EditorBuilder:
     @staticmethod
     def _empty_script_node_chain(editor, n: int):
         last = None
-        root = None
         for i in range(n):
             node = create_script_node(f"Script Node {i}", (i * 200, 0), parent=editor.id)
             
             if last is not None:
                 link = f"{last}.Out", f"{node}.In"
                 editor._link_callback(last, link)
-            else:
-                dpg.set_item_label(node, "Root")
-                root = node
         
             last = node
-
-        return root
 
     @staticmethod
     def build(window_size):
@@ -91,7 +107,7 @@ class EditorBuilder:
                             height=editor.size[1] - 50
                     ) as editor_id:
                         editor.id = editor_id
-                        editor.G.root = EditorBuilder._empty_script_node_chain(editor, 3)
+                        EditorBuilder._empty_script_node_chain(editor, 3)
 
             out_w = editor.size[0]/2
             out_h = editor.size[1]/4

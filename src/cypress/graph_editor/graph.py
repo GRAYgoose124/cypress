@@ -1,3 +1,4 @@
+from typing import List
 import dearpygui.dearpygui as dpg
 
 
@@ -5,41 +6,61 @@ class ScriptGraph:
     def __init__(self) -> None:
         self.script_nodes = {}
 
-    def get_prev_link(self, node):
-        prev = None
-        for link in self.script_nodes.values():
-            if link is not None:
-                l0 = int(link[0].strip("(").strip('\'').split('.')[0], 10)
-                l1 = int(link[1].strip(")").strip('\'').split('.')[0], 10)
-                if l1 == node:
-                    prev = l0
+    def add_link(self, sender, receiver, link):
+        if sender in self.script_nodes:
+            self.script_nodes[sender].append(link)
+        else:
+            self.script_nodes[sender] = [link]
 
-        return prev
+        if receiver not in self.script_nodes:
+            self.script_nodes[receiver] = []
 
     def get_next_link(self, node):
         link = self.script_nodes[node]
-        if link is not None:
+        if len(link):
             return int(link[1].split(".")[0], 10)
         else:
             return None
 
+    def get_prev_links(self, node):
+        prev_links = []
+        for links in self.script_nodes.values():
+            if links is not None:
+                for link in links:
+                    # todo use parse_to_ints
+                    l0 = int(link[0].strip("(").strip('\'').split('.')[0], 10)
+                    l1 = int(link[1].strip(")").strip('\'').split('.')[0], 10)
+                    if l1 == node:
+                        prev_links.append(l0)
+
+                return prev_links
+
+    def _get_chain_roots(self, end, roots=None):
+        if roots is None:
+            roots = []
+
+        prev_links = self.get_prev_links(end)
+        if len(prev_links) == 0:
+            roots.append(end)
+            return end
+        else:
+            for link in prev_links:
+                return self._get_chain_roots(link, roots)
+
     def _find_chain_roots(self):
         ends = []
-
-        for node, link in self.script_nodes.items():
-            if link is None:
+        for node, links in self.script_nodes.items():
+            if len(links) == 0:
                 ends.append(node)
         
-        roots = []
-        for end in ends:
-            prev_link = end
-            to_save = prev_link
-            while prev_link is not None:
-                to_save = prev_link
-                prev_link = self.get_prev_link(prev_link)
-            roots.append(to_save)
+        print(ends)
 
-        return roots
+        root_nodes = []
+        for final_node in ends:
+            root_nodes.append(self._get_chain_roots(final_node))
+
+        print(root_nodes)
+        return root_nodes
 
     @property
     def chains(self):
@@ -67,8 +88,14 @@ class ExecutableGraph(ScriptGraph):
 
         # TODO: Execute all contexts which flow into a final node.
         # Later MIMO will be supported.
-        for root in self.chains:
-            new_context = self.execute_chain(root)
-            contexts.append(new_context)
+        for roots in self.chains:
+            context = {}
+            if isinstance(roots, int):
+                context = self.execute_chain(roots)
+            elif isinstance(roots, List):
+                for root in roots:
+                    context.update(self.execute_chain(root))
+
+            contexts.append(context)
 
         return contexts
