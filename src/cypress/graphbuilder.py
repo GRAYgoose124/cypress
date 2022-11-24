@@ -12,7 +12,6 @@ class EditorGraphBuilder:
 
         self.root = None
         self.script_nodes = None
-        self.contexts = []
 
     def _empty_script_node_chain(self, n: int):
         last = None
@@ -44,7 +43,6 @@ class EditorGraphBuilder:
 
     # callback runs when user attempts to disconnect attributes
     def _delink_callback(self, sender, app_data):
-        print("DELINK", sender)
         self.script_nodes[sender] = None
         # app_data -> link_id
         dpg.delete_item(app_data)
@@ -66,14 +64,12 @@ class EditorGraphBuilder:
             if node == self.root:
                 self.root = self.script_nodes[node][1]
             dpg.delete_item(node)
-        
-    def execute(self, sender, app_data):
-        print("Executing Script Nodes")
-        
-        # create a python context for all nodes
+
+    def execute_chain(self, root):
+        visited = set()
+
         context = {'Final': None}
 
-        root = self.root
         current = root
         while current is not None:
             code = dpg.get_value(f"{current}.Code")
@@ -85,9 +81,58 @@ class EditorGraphBuilder:
                 current = int(link[1].split(".")[0], 10)
             else:
                 break
+
+            visited.add(current)
+
+        return visited, context
+
+    def _find_prev_link(self, node):
+        prev = None
+        for link in self.script_nodes.values():
+            if link is not None:
+                l0 = int(link[0].strip("(").strip('\'').split('.')[0], 10)
+                l1 = int(link[1].strip(")").strip('\'').split('.')[0], 10)
+                if l1 == node:
+                    prev = l0
+
+        return prev
+
+    def _find_chain_roots(self):
+        ends = []
+
+        for node, link in self.script_nodes.items():
+            if link is None:
+                ends.append(node)
+        
+        roots = []
+        for end in ends:
+            prev_link = end
+            while prev_link is not None:
+                prev_link = self._find_prev_link(prev_link)
+            roots.append(prev_link)
+
+        return roots
+
+    def execute(self, sender, app_data):
+        visited = set()
+        contexts = []
+
+        # Start from root node for sensible ordering.
+        visited, context = self.execute_chain(self.root)
+        contexts.append(context)
+        
+        # Execute orphaned chains
+        roots = self._find_chain_roots()
+        if self.root in roots:
+            roots.remove(self.root)
+
+        for root in roots:
+            now_visited, new_context = self.execute_chain(root)
+            visited.update(now_visited)
+            contexts.append(new_context)
         
         # Update output window
-        dpg.set_value("Execution.Output", context['Final'])
+        dpg.set_value("Execution.Output", [f"{context['Final']}\n" for context in contexts])
 
     def _close_callback(self):
         # close the window
