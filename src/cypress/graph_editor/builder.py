@@ -6,6 +6,8 @@ from cypress.graph_editor.utils import parse_link_ints_to_str
 
 
 def init_test_graph(editor):
+    """ Initialize a test graph for editor default workspace. """
+
     n = 3
     last = EditorBuilder._empty_script_node_chain(editor, n)
 
@@ -20,6 +22,7 @@ def init_test_graph(editor):
 class EditorBuilder:
     @staticmethod
     def _empty_script_node_chain(editor, n: int):
+        """ Build a default chain of nodes, singly-linked in `editor`. """
         last = None
         for i in range(n):
             node = create_script_node(f"Script Node {i}", (25 + i * 150, 25), parent=editor.id)

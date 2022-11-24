@@ -1,3 +1,6 @@
+import dearpygui.dearpygui as dpg
+
+
 def add_and_load_image(image_path, parent=None):
     width, height, channels, data = dpg.load_image(image_path)
 

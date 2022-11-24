@@ -13,12 +13,13 @@ class Editor:
         self.G = ExecutableGraph()
 
     def _execute_graph(self, sender, app_data):
+        """ Callback to execute the editor's executable graph. """
         results = self.G.execute()
 
         dpg.set_value("Execution.Output", [f"{context['Final']}" for context in results])
 
-
     def _link_callback(self, sender, link):
+        """ Callback to link nodes in the editor. """
         sender, receiver = parse_link_to_ints(link)
         self.G.add_link(sender, receiver, link)
 
@@ -26,6 +27,7 @@ class Editor:
         dpg.add_node_link(link[0], link[1], label=link, parent=self.id)
 
     def _delink_callback(self, sender, app_data):
+        """ Callback to unlink nodes in the editor. """
         link = dpg.get_item_label(app_data)
         
         link = link_to_sender_receiver(link)
@@ -37,12 +39,14 @@ class Editor:
         dpg.delete_item(app_data)
 
     def _add_new_node(self, sender, app_data):
+        """ Callback to add a new node in the editor. """
         pos = self.size[0] / 2, self.size[1] / 2
         new_node = create_script_node("Script Node", pos, parent=self.id)
         self.G.script_nodes[new_node] = []
 
     # delete selected node
     def _delete_selection(self, sender, app_data):
+        """ Callback to delete all selected items in editor. """
         links = dpg.get_selected_links(self.id)
         for link in links:
             n1 = int(dpg.get_item_label(link).split(",")[0].strip("(").strip('\'').split('.')[0], 10)
@@ -53,6 +57,7 @@ class Editor:
             dpg.delete_item(node)
 
     def _close_app_callback(self):
+        """ Callback for closing the app with DearPyGUI. """
         # close the window
         dpg.stop_dearpygui()
 

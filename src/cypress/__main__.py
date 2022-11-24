@@ -9,11 +9,11 @@ from networkx.drawing.nx_agraph import to_agraph
 
 from .app import App
 
+
 def main():
     app = App()
     app.run()
 
-  
 
 # Deprecated. Kept for compatibility with pre-PEP 621 entry.
 if __name__ == "__main__":

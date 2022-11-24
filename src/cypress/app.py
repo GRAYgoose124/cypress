@@ -1,4 +1,3 @@
-from pathlib import Path
 import dearpygui.dearpygui as dpg
 
 from cypress.graph_editor.builder import EditorBuilder
