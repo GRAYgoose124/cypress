@@ -5,7 +5,7 @@ class ScriptGraph:
     def __init__(self) -> None:
         self.script_nodes = {}
 
-    def _find_prev_link(self, node):
+    def get_prev_link(self, node):
         prev = None
         for link in self.script_nodes.values():
             if link is not None:
@@ -15,6 +15,13 @@ class ScriptGraph:
                     prev = l0
 
         return prev
+
+    def get_next_link(self, node):
+        link = self.script_nodes[node]
+        if link is not None:
+            return int(link[1].split(".")[0], 10)
+        else:
+            return None
 
     def _find_chain_roots(self):
         ends = []
@@ -26,9 +33,11 @@ class ScriptGraph:
         roots = []
         for end in ends:
             prev_link = end
+            to_save = prev_link
             while prev_link is not None:
-                prev_link = self._find_prev_link(prev_link)
-            roots.append(prev_link)
+                to_save = prev_link
+                prev_link = self.get_prev_link(prev_link)
+            roots.append(to_save)
 
         return roots
 
@@ -42,35 +51,24 @@ class ExecutableGraph(ScriptGraph):
         super().__init__()
 
     def execute_chain(self, root):
-        visited = set()
-
         context = {'Final': None}
 
         current = root
         while current is not None:
             code = dpg.get_value(f"{current}.Code")
-            # execute code
             exec(code, context)
 
-            link = self.script_nodes[current]
-            if link is not None:
-                current = int(link[1].split(".")[0], 10)
-            else:
-                break
+            current = self.get_next_link(current)
+        
+        return context
 
-            visited.add(current)
-
-        return visited, context
-
-    def execute(self, sender, app_data):
-        visited = set()
+    def execute(self):
         contexts = []
 
+        # TODO: Execute all contexts which flow into a final node.
+        # Later MIMO will be supported.
         for root in self.chains:
-            now_visited, new_context = self.execute_chain(root)
-            visited.update(now_visited)
+            new_context = self.execute_chain(root)
             contexts.append(new_context)
 
-        # TODO: move to Editor 
-        # Update output window
-        dpg.set_value("Execution.Output", [f"{context['Final']}\n" for context in contexts])
+        return contexts

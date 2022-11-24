@@ -11,6 +11,12 @@ class Editor:
 
         self.G = ExecutableGraph()
 
+    def _execute_graph(self, sender, app_data):
+        results = self.G.execute()
+
+        dpg.set_value("Execution.Output", [f"{context['Final']}" for context in results])
+
+
     def _link_callback(self, sender, link):
         sender = int(link[0].split(".")[0], 10)
         receiver = int(link[1].split(".")[0], 10)
@@ -54,7 +60,6 @@ class EditorBuilder:
         last = None
         root = None
         for i in range(n):
-            print(i, editor.id)
             node = create_script_node(f"Script Node {i}", (i * 200, 0), parent=editor.id)
             
             if last is not None:
@@ -77,7 +82,7 @@ class EditorBuilder:
             with dpg.group():
                 with dpg.group(horizontal=True):
                     with dpg.group():
-                        dpg.add_button(label="Execute", callback=editor.G.execute)
+                        dpg.add_button(label="Execute", callback=editor._execute_graph)
                         dpg.add_button(label="Add", callback=editor._add_new_node)
                         dpg.add_button(label="Delete", callback=editor._delete_selection)
 
