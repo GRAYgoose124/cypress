@@ -1,3 +1,4 @@
+from typing_extensions import Self
 import dearpygui.dearpygui as dpg
 
 from cypress.node.script_node import create_script_node
@@ -76,18 +77,32 @@ class Editor:
         dpg.stop_dearpygui()
 
 
+def init_test_graph(editor):
+    n = 3
+    last = EditorBuilder._empty_script_node_chain(editor, n)
+
+    parallel_node = create_script_node(f"Parallel", (25 + (n-2) * 150, 200), parent=editor.id)
+    editor.G.script_nodes[parallel_node] = []
+    editor._link_callback(parallel_node, parse_link_ints_to_str((parallel_node, last)))
+    
+    orphan_node = create_script_node(f"Orphan", (25 + (n-2) * 150, 400), parent=editor.id)
+    editor.G.script_nodes[orphan_node] = []
+
+
 class EditorBuilder:
     @staticmethod
     def _empty_script_node_chain(editor, n: int):
         last = None
         for i in range(n):
-            node = create_script_node(f"Script Node {i}", (i * 200, 0), parent=editor.id)
+            node = create_script_node(f"Script Node {i}", (25 + i * 150, 25), parent=editor.id)
             
             if last is not None:
                 link = f"{last}.Out", f"{node}.In"
                 editor._link_callback(last, link)
         
             last = node
+        
+        return last
 
     @staticmethod
     def build(window_size):
@@ -107,7 +122,7 @@ class EditorBuilder:
                             height=editor.size[1] - 50
                     ) as editor_id:
                         editor.id = editor_id
-                        EditorBuilder._empty_script_node_chain(editor, 3)
+                        init_test_graph(editor)
 
             out_w = editor.size[0]/2
             out_h = editor.size[1]/4

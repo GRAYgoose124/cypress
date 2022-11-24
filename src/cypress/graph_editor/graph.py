@@ -1,4 +1,4 @@
-from typing import List
+from logging import root
 import dearpygui.dearpygui as dpg
 
 
@@ -30,6 +30,7 @@ class ScriptGraph:
                     # todo use parse_to_ints
                     l0 = int(link[0].strip("(").strip('\'').split('.')[0], 10)
                     l1 = int(link[1].strip(")").strip('\'').split('.')[0], 10)
+                    print(f"{l0=}, f{l1=}")
                     if l1 == node:
                         prev_links.append(l0)
 
@@ -40,6 +41,7 @@ class ScriptGraph:
             roots = []
 
         prev_links = self.get_prev_links(end)
+        print(f"{prev_links=}")
         if len(prev_links) == 0:
             roots.append(end)
             return end
@@ -53,13 +55,11 @@ class ScriptGraph:
             if len(links) == 0:
                 ends.append(node)
         
-        print(ends)
-
         root_nodes = []
         for final_node in ends:
             root_nodes.append(self._get_chain_roots(final_node))
 
-        print(root_nodes)
+        print(f"{root_nodes=}")
         return root_nodes
 
     @property
@@ -78,7 +78,7 @@ class ExecutableGraph(ScriptGraph):
         while current is not None:
             code = dpg.get_value(f"{current}.Code")
             exec(code, context)
-
+        
             current = self.get_next_link(current)
         
         return context
@@ -89,12 +89,18 @@ class ExecutableGraph(ScriptGraph):
         # TODO: Execute all contexts which flow into a final node.
         # Later MIMO will be supported.
         for roots in self.chains:
+            print(roots)
             context = {}
             if isinstance(roots, int):
                 context = self.execute_chain(roots)
-            elif isinstance(roots, List):
+            else:
+                print(roots)
+                ctx = {}
                 for root in roots:
                     context.update(self.execute_chain(root))
+                    print(f"{root}: {ctx['Final']=}")
+
+
 
             contexts.append(context)
 
