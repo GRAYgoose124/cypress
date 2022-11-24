@@ -1,7 +1,7 @@
 from pathlib import Path
 import dearpygui.dearpygui as dpg
 
-from cypress.graph_editor.editor import EditorBuilder
+from cypress.graph_editor.builder import EditorBuilder
 
 
 class App:
@@ -15,7 +15,7 @@ class App:
         dpg.create_context()
 
         self.editor = EditorBuilder.build(self.size)
-        
+
         dpg.create_viewport(title=self.title, width=self.size[0], height=self.size[1])
 
         dpg.setup_dearpygui()

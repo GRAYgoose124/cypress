@@ -1,4 +1,5 @@
 from logging import root
+from cypress.graph_editor.utils import parse_link_ints_to_str, parse_link_to_ints
 import dearpygui.dearpygui as dpg
 
 
@@ -15,72 +16,82 @@ class ScriptGraph:
         if receiver not in self.script_nodes:
             self.script_nodes[receiver] = []
 
-    def get_next_link(self, node):
-        link = self.script_nodes[node]
-        if len(link):
-            return int(link[1].split(".")[0], 10)
-        else:
-            return None
+    def get_next_links(self, node):
+        next_links = []
+        # Look for another node acting as a receiver for this node as a sender
+        for n, links in self.script_nodes.items():
+            for link in links:
+                l0, l1 = parse_link_to_ints(link)
+                if l0 == node:
+                    next_links.append(l1)
+        
+        return next_links
 
-    def get_prev_links(self, node):
+
+    def get_prev_links(self, this_node):
         prev_links = []
-        for links in self.script_nodes.values():
-            if links is not None:
-                for link in links:
-                    # todo use parse_to_ints
-                    l0 = int(link[0].strip("(").strip('\'').split('.')[0], 10)
-                    l1 = int(link[1].strip(")").strip('\'').split('.')[0], 10)
-                    print(f"{l0=}, f{l1=}")
-                    if l1 == node:
-                        prev_links.append(l0)
+        for n, links in self.script_nodes.items():
+            for link in links:
+                l0, l1 = parse_link_to_ints(link)
+                if l1 == this_node:
+                    prev_links.append(n)
 
-                return prev_links
+        return prev_links
 
     def _get_chain_roots(self, end, roots=None):
         if roots is None:
             roots = []
 
         prev_links = self.get_prev_links(end)
-        print(f"{prev_links=}")
         if len(prev_links) == 0:
             roots.append(end)
-            return end
         else:
-            for link in prev_links:
-                return self._get_chain_roots(link, roots)
+            for prev in prev_links:
+                self._get_chain_roots(prev, roots)
 
-    def _find_chain_roots(self):
+        return roots
+        
+    def _all_chain_roots(self):
         ends = []
         for node, links in self.script_nodes.items():
             if len(links) == 0:
                 ends.append(node)
         
+
         root_nodes = []
         for final_node in ends:
             root_nodes.append(self._get_chain_roots(final_node))
 
-        print(f"{root_nodes=}")
         return root_nodes
 
     @property
     def chains(self):
-        return self._find_chain_roots()
+        return self._all_chain_roots()
 
 
 class ExecutableGraph(ScriptGraph):
     def __init__(self) -> None:
         super().__init__()
 
-    def execute_chain(self, root):
-        context = {'Final': None}
+    def execute_chain(self, current, ctx=None):
+        if ctx is not None:
+            context = ctx
+        else:
+            context = {'Final': None}
+       
+        code = dpg.get_value(f"{current}.Code")
 
-        current = root
-        while current is not None:
-            code = dpg.get_value(f"{current}.Code")
+        try:
             exec(code, context)
-        
-            current = self.get_next_link(current)
-        
+        except NameError:
+            return context
+
+
+        links = self.get_next_links(current)
+        print(f"{current=} next {links}")
+        for node in links:
+            self.execute_chain(node, ctx)
+    
         return context
 
     def execute(self):
@@ -89,18 +100,12 @@ class ExecutableGraph(ScriptGraph):
         # TODO: Execute all contexts which flow into a final node.
         # Later MIMO will be supported.
         for roots in self.chains:
-            print(roots)
             context = {}
             if isinstance(roots, int):
                 context = self.execute_chain(roots)
             else:
-                print(roots)
-                ctx = {}
                 for root in roots:
                     context.update(self.execute_chain(root))
-                    print(f"{root}: {ctx['Final']=}")
-
-
 
             contexts.append(context)
 
