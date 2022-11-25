@@ -1,6 +1,6 @@
 import logging
 
-from .app import App
+from .app.core import App
 
 
 logger = logging.getLogger(__name__)
