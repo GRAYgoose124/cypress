@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from cypress.node.color_unit import create_color_unit
 from cypress.node.script_node import create_script_node
-from cypress.graph_editor.graph import ChainGraph, ExecutableGraph
+from cypress.graph_editor.graph import ChainGraph, CodeGraph
 from cypress.graph_editor.utils import link_to_sender_receiver, parse_link_ints_to_str, parse_link_to_ints
 
 
@@ -11,15 +11,14 @@ class Editor:
         self.id = None
         self.size = window_size
 
-        self.eG = ExecutableGraph()
+        self.eG = CodeGraph()
 
     def _execute_graph(self, sender, app_data):
         """ Callback to execute the editor's executable graph. """
         results = self.eG.execute()
 
         if any(results):
-            print([type(r) for r in results])
-            dpg.set_value("Execution.Output", [f"{context['Final']}" if context is not None else "OOPS" for context in results])
+            dpg.set_value("Execution.Output", results)
 
     def _link_callback(self, sender, link):
         """ Callback to link nodes in the editor. """
@@ -40,8 +39,6 @@ class Editor:
     
         if len(self.eG.nodes[sender]) == 1 and self.eG.nodes[sender] == ChainGraph.Sentinel:
             del(self.eG.nodes[sender])
-            print(self.eG.nodes[r])
-            print(list(filter(lambda i: str(sender) in i[0], self.eG.nodes[r])))
         else:
             self.eG.nodes[sender].remove(link)
 
@@ -53,13 +50,13 @@ class Editor:
             case 'Script':
                 if name is None:
                     name = "Script Node"
-                new_node = create_script_node(name, pos, parent=parent)
+                new_node = create_script_node(name, pos=pos, parent=parent)
                 self.eG.nodes[new_node] = [ChainGraph.Sentinel]
             case 'Color':
                 # TODO: integrate with executable graph - disjoint 
                 if name is None:
                     name = "Color Node"
-                new_node = create_color_unit(name, pos, parent=parent)
+                new_node = create_color_unit(name, pos=pos, parent=parent)
             case _:
                 return 
         

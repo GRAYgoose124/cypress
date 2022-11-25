@@ -7,21 +7,23 @@ from cypress.graph_editor.utils import parse_link_ints_to_str
 
 def init_script_nodes_demo_graph(editor, n=3):
     """ Initialize a graph of script nodes for editor default workspace. """
+    size = (150, 200)
+    offset = (50, 50)
 
-    chain = EditorBuilder._empty_script_node_chain(editor, n)
-    pos = (25 + (n-2) * 150, 200)
-
-    editor.add_new_node("Script", pos, editor.id, name="Parallel", chain=chain)
-    editor.add_new_node("Script", pos, editor.id, name="Orphan")
+    chain = EditorBuilder._empty_script_node_chain(editor, n, size=size, offset=offset)
+    pos = ((n-2) * size[0] + offset[0]*2, size[1] + offset[1]*2)
+    pos2 = (2.5 * pos[0], pos[1])
+    editor.add_new_node("Script", pos=pos, parent=editor.id, name="Parallel", chain=chain)
+    editor.add_new_node("Script", pos=pos2, parent=editor.id, name="Orphan")
 
 
 class EditorBuilder:
     @staticmethod
-    def _empty_script_node_chain(editor, n: int):
+    def _empty_script_node_chain(editor, n: int, size = (150, 200), offset = (50, 50)):
         """ Build a default chain of nodes, singly-linked in `editor`. """
         last = None
         for i in range(n):
-            node = create_script_node(f"Script Node {i}", (25 + i * 150, 25), parent=editor.id)
+            node = create_script_node(f"Script Node {i}", pos=((size[0]+offset[0]*2)*i+offset[0], offset[1]), parent=editor.id)
             
             if last is not None:
                 link = f"{last}.Out", f"{node}.In"
@@ -53,6 +55,7 @@ class EditorBuilder:
             out_w = editor.size[0]/2
             out_h = editor.size[1]/4
             bottom_left = editor.size[0]-out_w, editor.size[1]-out_h
+            
         with dpg.window(label="Cypress Output", 
                         width=out_w, 
                         height=out_h, 

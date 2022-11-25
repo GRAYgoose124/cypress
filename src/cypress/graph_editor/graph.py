@@ -1,4 +1,5 @@
 import logging
+from typing_extensions import Self
 
 from cypress.graph_editor.utils import parse_link_ints_to_str, parse_link_to_ints
 import dearpygui.dearpygui as dpg
@@ -93,26 +94,27 @@ class ChainGraph:
         """ 
         return self._all_chain_roots()
 
-
 class ExecutableGraph(ChainGraph):
     def __init__(self) -> None:
         super().__init__()
 
+        self.output = None
+
+    def _exe_func(self):
+        """ Updates the executable graph context appropriately or returns None if failure. """
+        raise NotImplementedError
+
     def execute_chain(self, current, ctx=None):
-        """ Given a node, execute the chain of nodes that follow it. """
+        """ Given a node, execute the chain of nodes that follow it. 
+        
+        """
         if ctx is not None:
             context = ctx
         else:
-            context = {'Final': None}
+            context = {self.output: None}
        
-        code = dpg.get_value(f"{current}.Code")
-        if code is None:
-            return
-            
-        try:
-            exec(code, context)
-        except NameError:
-            print(f"NameError {context['Final']=}")
+        new_ctx = self._exe_func(current, context)
+        if new_ctx is None:
             return context
 
         for node in self.get_next_links(current):
@@ -138,4 +140,26 @@ class ExecutableGraph(ChainGraph):
 
             contexts.append(context)
 
-        return contexts
+        results = [f"{context[self.output]}" if context is not None else "OOPS" for context in contexts]
+        return results
+
+class CodeGraph(ExecutableGraph):
+    def __init__(self) -> None:
+        super().__init__()
+        self.output = "Final"
+
+    def _exe_func(self, current, context):
+        code = dpg.get_value(f"{current}.Code")
+
+        if code is None:
+            return context
+            
+        try:
+            exec(code, context)
+        # This naively fails on end nodes if one of their subchains has not been resolved.
+        # TODO: Custom exception?
+        except NameError:
+            print(f"NameError {context[self.output]}")
+            return context
+        
+        return context
