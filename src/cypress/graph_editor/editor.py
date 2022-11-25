@@ -56,9 +56,4 @@ class Editor:
         for node in nodes:
             dpg.delete_item(node)
 
-    def _close_app_callback(self):
-        """ Callback for closing the app with DearPyGUI. """
-        # close the window
-        dpg.stop_dearpygui()
-
 

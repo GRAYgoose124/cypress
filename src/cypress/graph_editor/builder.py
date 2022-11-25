@@ -36,34 +36,33 @@ class EditorBuilder:
         return last
 
     @staticmethod
-    def build(window_size, initializer=init_test_graph):
+    def build(parent, window_size, editor=None, initializer=init_test_graph):
         """ Builds the main cyprus editor window. """
-        editor = Editor(window_size=window_size)
+        if editor is None:
+            editor = Editor(window_size=window_size)
+        else:
+            editor.size = window_size
 
-        with dpg.window(label="Editor", width=window_size[0], height=window_size[1], no_bring_to_front_on_focus=True, on_close=editor._close_app_callback):
-            with dpg.group():
-                with dpg.group(horizontal=True):
-                    with dpg.group():
-                        dpg.add_button(label="Execute", callback=editor._execute_graph)
-                        dpg.add_button(label="Add", callback=editor._add_new_node)
-                        dpg.add_button(label="Delete", callback=editor._delete_selection)
+        with dpg.window(label="Editor", width=window_size[0], height=window_size[1],
+            no_bring_to_front_on_focus=True, no_move=True, no_resize=True, no_title_bar=True,
+        ):
 
-                    with dpg.node_editor(callback=editor._link_callback, 
-                            
-                            height=editor.size[1] - 50
-                    ) as editor_id:
-                        editor.id = editor_id
-                        initializer(editor)
+            with dpg.node_editor(callback=editor._link_callback, 
+                    height=editor.size[1] - 50,
+                    parent=parent,
+            ) as editor_id:
+                editor.id = editor_id
+                initializer(editor)
 
             out_w = editor.size[0]/2
             out_h = editor.size[1]/4
             bottom_left = editor.size[0]-out_w, editor.size[1]-out_h
-            with dpg.window(label="Cypress Output", 
-                            width=out_w, 
-                            height=out_h, 
-                            pos=bottom_left,
-                            no_close=True
-            ):
-                dpg.add_text(tag="Execution.Output")
+        with dpg.window(label="Cypress Output", 
+                        width=out_w, 
+                        height=out_h, 
+                        pos=bottom_left,
+                        no_close=True
+        ):
+            dpg.add_text(tag="Execution.Output")
         
         return editor
