@@ -62,7 +62,6 @@ class ScriptGraph:
             if len(links) == 0:
                 ends.append(node)
         
-
         root_nodes = []
         for final_node in ends:
             root_nodes.append(self._get_chain_roots(final_node))
@@ -98,10 +97,7 @@ class ExecutableGraph(ScriptGraph):
             print(f"NameError {context['Final']=}")
             return context
 
-
-        links = self.get_next_links(current)
-        print(f"{current=} next {links}")
-        for node in links:
+        for node in self.get_next_links(current):
             self.execute_chain(node, context)
     
         return context

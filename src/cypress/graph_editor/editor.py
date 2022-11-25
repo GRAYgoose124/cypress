@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 
+from cypress.node.color_unit import create_color_unit
 from cypress.node.script_node import create_script_node
 from cypress.graph_editor.graph import ExecutableGraph
 from cypress.graph_editor.utils import link_to_sender_receiver, parse_link_ints_to_str, parse_link_to_ints
@@ -41,7 +42,15 @@ class Editor:
     def _add_new_node(self, sender, app_data):
         """ Callback to add a new node in the editor. """
         pos = self.size[0] / 2, self.size[1] / 2
-        new_node = create_script_node("Script Node", pos, parent=self.id)
+
+        match app_data:
+            case 'Script':
+                new_node = create_script_node("Script Node", pos, parent=self.id)
+            case 'Color':
+                new_node = create_color_unit("Color Node", pos, parent=self.id)
+            case _:
+                return 
+
         self.G.script_nodes[new_node] = []
 
     # delete selected node
