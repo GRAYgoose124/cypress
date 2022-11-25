@@ -1,9 +1,10 @@
 import dearpygui.dearpygui as dpg
 
-from cypress.node.color_unit import create_color_unit
-from cypress.node.script_node import create_script_node
-from cypress.graph_editor.graph import ChainGraph, CodeGraph
-from cypress.graph_editor.utils import link_to_sender_receiver, parse_link_ints_to_str, parse_link_to_ints
+from cypress.editor.node.color_unit import create_color_unit
+from cypress.editor.node.script_node import create_script_node
+from cypress.editor.graph.core import ChainGraph
+from cypress.editor.graph.script import CodeGraph
+from cypress.editor.utils import link_to_sender_receiver, parse_link_ints_to_str, parse_link_to_ints
 
 
 class Editor:
@@ -17,8 +18,11 @@ class Editor:
         """ Callback to execute the editor's executable graph. """
         results = self.eG.execute()
 
-        if any(results):
-            dpg.set_value("Execution.Output", results)
+        if not any(results):
+            results = ""
+            
+        dpg.set_value("Execution.Output", results)
+
 
     def _link_callback(self, sender, link):
         """ Callback to link nodes in the editor. """

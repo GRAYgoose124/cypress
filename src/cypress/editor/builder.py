@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 
-from cypress.node.script_node import create_script_node
-from cypress.graph_editor.editor import Editor
-from cypress.graph_editor.utils import parse_link_ints_to_str
+from cypress.editor.node.script_node import create_script_node
+from cypress.editor.editor import Editor
+from cypress.editor.utils import parse_link_ints_to_str
 
 
 def init_script_nodes_demo_graph(editor, n=3):
@@ -55,7 +55,7 @@ class EditorBuilder:
             out_w = editor.size[0]/2
             out_h = editor.size[1]/4
             bottom_left = editor.size[0]-out_w, editor.size[1]-out_h
-            
+
         with dpg.window(label="Cypress Output", 
                         width=out_w, 
                         height=out_h, 

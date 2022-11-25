@@ -1,7 +1,7 @@
 from typing_extensions import Self
 import dearpygui.dearpygui as dpg
 
-from cypress.graph_editor.builder import EditorBuilder, init_script_nodes_demo_graph
+from cypress.editor.builder import EditorBuilder, init_script_nodes_demo_graph
 
 
 class App:
