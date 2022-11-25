@@ -1,13 +1,10 @@
-from pathlib import Path
-
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
-import functools as ft
-import networkx as nx
-from networkx.drawing.nx_agraph import to_agraph
+import logging
 
 from .app import App
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def main():

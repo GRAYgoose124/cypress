@@ -1,28 +1,37 @@
-from logging import root
+import logging
+
 from cypress.graph_editor.utils import parse_link_ints_to_str, parse_link_to_ints
 import dearpygui.dearpygui as dpg
 
 
-class ScriptGraph:
+logger = logging.getLogger(__name__)
+
+
+class ChainGraph:
+    Sentinel = (0xDEAD, 0xBEEF)
+
     def __init__(self) -> None:
-        self.script_nodes = {}
+        self.nodes = {}
 
     def add_link(self, sender, receiver, link):
         """ Add a link between two script nodes. """
-        if sender in self.script_nodes:
-            self.script_nodes[sender].append(link)
+        if sender in self.nodes:
+            self.nodes[sender].append(link)
         else:
-            self.script_nodes[sender] = [link]
+            self.nodes[sender] = [link, ChainGraph.Sentinel]
 
-        if receiver not in self.script_nodes:
-            self.script_nodes[receiver] = []
+        if receiver not in self.nodes:
+            self.nodes[receiver] = [ChainGraph.Sentinel]
 
     def get_next_links(self, node):
         """ Get all nodes which the given node outputs to. """
         next_links = []
         # Look for another node acting as a receiver for this node as a sender
-        for n, links in self.script_nodes.items():
+        for n, links in self.nodes.items():
             for link in links:
+                if link == ChainGraph.Sentinel:
+                    continue
+                
                 l0, l1 = parse_link_to_ints(link)
                 if l0 == node:
                     next_links.append(l1)
@@ -32,12 +41,17 @@ class ScriptGraph:
     def get_prev_links(self, node):
         """ Get all nodes which input into the given node. """
         prev_links = []
-        for n, links in self.script_nodes.items():
+        for n, links in self.nodes.items():
             for link in links:
+                if link == ChainGraph.Sentinel:
+                    continue
+
                 l0, l1 = parse_link_to_ints(link)
                 if l1 == node:
                     # prob should use l0
                     prev_links.append(n)
+
+        logger.debug(f"get_prev_links.{prev_links=}")
 
         return prev_links
 
@@ -58,13 +72,15 @@ class ScriptGraph:
     def _all_chain_roots(self):
         """ Internal method to find all chains of this graph. """
         ends = []
-        for node, links in self.script_nodes.items():
-            if len(links) == 0:
+        for node, links in self.nodes.items():
+            if len(links) == 1 and links[0] == ChainGraph.Sentinel:
                 ends.append(node)
         
         root_nodes = []
         for final_node in ends:
             root_nodes.append(self._get_chain_roots(final_node))
+
+        logger.debug(f"_all_chain_roots.{root_nodes=}")
 
         return root_nodes
 
@@ -78,7 +94,7 @@ class ScriptGraph:
         return self._all_chain_roots()
 
 
-class ExecutableGraph(ScriptGraph):
+class ExecutableGraph(ChainGraph):
     def __init__(self) -> None:
         super().__init__()
 
@@ -90,7 +106,9 @@ class ExecutableGraph(ScriptGraph):
             context = {'Final': None}
        
         code = dpg.get_value(f"{current}.Code")
-
+        if code is None:
+            return
+            
         try:
             exec(code, context)
         except NameError:

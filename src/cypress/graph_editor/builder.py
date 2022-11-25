@@ -5,18 +5,14 @@ from cypress.graph_editor.editor import Editor
 from cypress.graph_editor.utils import parse_link_ints_to_str
 
 
-def init_test_graph(editor):
-    """ Initialize a test graph for editor default workspace. """
+def init_script_nodes_demo_graph(editor, n=3):
+    """ Initialize a graph of script nodes for editor default workspace. """
 
-    n = 3
-    last = EditorBuilder._empty_script_node_chain(editor, n)
+    chain = EditorBuilder._empty_script_node_chain(editor, n)
+    pos = (25 + (n-2) * 150, 200)
 
-    parallel_node = create_script_node(f"Parallel", (25 + (n-2) * 150, 200), parent=editor.id)
-    editor.G.script_nodes[parallel_node] = []
-    editor._link_callback(parallel_node, parse_link_ints_to_str((parallel_node, last)))
-    
-    orphan_node = create_script_node(f"Orphan", (25 + (n-2) * 150, 400), parent=editor.id)
-    editor.G.script_nodes[orphan_node] = []
+    editor.add_new_node("Script", pos, editor.id, name="Parallel", chain=chain)
+    editor.add_new_node("Script", pos, editor.id, name="Orphan")
 
 
 class EditorBuilder:
@@ -36,7 +32,7 @@ class EditorBuilder:
         return last
 
     @staticmethod
-    def build(parent, window_size, editor=None, initializer=init_test_graph):
+    def build(parent, window_size, editor=None, initializer=init_script_nodes_demo_graph):
         """ Builds the main cyprus editor window. """
         if editor is None:
             editor = Editor(window_size=window_size)

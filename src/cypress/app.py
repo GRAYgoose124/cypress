@@ -1,7 +1,7 @@
 from typing_extensions import Self
 import dearpygui.dearpygui as dpg
 
-from cypress.graph_editor.builder import EditorBuilder, init_test_graph
+from cypress.graph_editor.builder import EditorBuilder, init_script_nodes_demo_graph
 
 
 class App:
@@ -27,7 +27,7 @@ class App:
                 # TODO: Generate list from .node abc instances.
                 node_options = ("Script", "Color")
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Add", callback=lambda s, ad: self.editor._add_new_node(s, self.selected_node))
+                    dpg.add_button(label="Add", callback=lambda s, ad: self.editor._add_new_node_callback(s, self.selected_node))
                     dpg.add_combo(node_options, no_preview=True, default_value="Script", callback=lambda s, ad: setattr(self, '_selected_node', ad))
 
         
