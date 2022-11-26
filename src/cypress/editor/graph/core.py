@@ -7,6 +7,10 @@ from cypress.editor.utils import parse_link_ints_to_str, parse_link_to_ints
 logger = logging.getLogger(__name__)
 
 
+class ExecutableGraphCycle(Exception):
+    pass
+
+
 class ChainGraph:
     Sentinel = (0xDEAD, 0xBEEF)
 
@@ -55,17 +59,25 @@ class ChainGraph:
 
         return prev_links
 
-    def _get_chain_roots(self, end, roots=None):
+    def _get_chain_roots(self, end, roots=None, visited=None):
         """ Get all roots which contribute to a chain's final node. """
         if roots is None:
             roots = []
+        if visited is None:
+            visited = []
 
         prev_links = self.get_prev_links(end)
         if len(prev_links) == 0:
             roots.append(end)
+            visited.append(end)
         else:
             for prev in prev_links:
-                self._get_chain_roots(prev, roots)
+                if prev not in visited:
+                    visited.append(prev)
+                    self._get_chain_roots(prev, roots=roots, visited=visited)
+                else:
+                    logger.info(f"Cycle detected, final node: {end} failed.")
+                    raise ExecutableGraphCycle
 
         return roots
         
@@ -78,7 +90,10 @@ class ChainGraph:
         
         root_nodes = []
         for final_node in ends:
-            root_nodes.append(self._get_chain_roots(final_node))
+            try:
+                root_nodes.append(self._get_chain_roots(final_node))
+            except ExecutableGraphCycle:
+                continue
 
         logger.debug(f"_all_chain_roots.{root_nodes=}")
 

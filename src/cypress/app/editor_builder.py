@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 
-from cypress.editor.node.script_node import create_script_node
+from cypress.editor.node.script import create_script_node
 from cypress.editor.editor import Editor
 from cypress.editor.utils import parse_link_ints_to_str
 
