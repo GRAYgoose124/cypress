@@ -37,10 +37,7 @@ class Editor:
         link = dpg.get_item_label(app_data)
         
         link = link_to_sender_receiver(link)
-        link = parse_link_to_ints(link)
-        s, r = link
-        link = parse_link_ints_to_str(link)
-    
+      
         if len(self.eG.nodes[sender]) == 1 and self.eG.nodes[sender] == ChainGraph.Sentinel:
             del(self.eG.nodes[sender])
         else:
