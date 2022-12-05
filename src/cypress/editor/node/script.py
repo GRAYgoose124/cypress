@@ -16,4 +16,3 @@ def create_script_node(
             
         return n_id
   
-

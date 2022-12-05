@@ -64,10 +64,12 @@ class Editor:
         if chain is not None:
             self._link_callback(new_node, parse_link_ints_to_str((new_node, chain)))
 
-    def _add_new_node_callback(self, sender, app_data):
+    def _add_new_node_callback(self, sender, app_data, pos=None):
         """ Callback to add a new node in the editor. """
-        pos = self.size[0] / 2, self.size[1] / 2
+        if pos is None:
+            pos = self.size[0] / 2, self.size[1] / 2
 
+        print(pos)
         self.add_new_node(app_data, pos, self.id)
 
     # delete selected node

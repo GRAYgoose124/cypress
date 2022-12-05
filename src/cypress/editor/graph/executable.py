@@ -7,7 +7,7 @@ class ExecutableGraph(ChainGraph):
 
         self.output = None
 
-    def _exe_func(self):
+    def _exe_func(self, current, context):
         """ Updates the executable graph context appropriately or returns None if failure. """
         raise NotImplementedError
 
