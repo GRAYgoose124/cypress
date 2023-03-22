@@ -23,24 +23,24 @@ class Editor:
 
         dpg.set_value("Execution.Output", results)
 
-
     def _link_callback(self, sender, link):
         """ Callback to link nodes in the editor. """
         sender, receiver = parse_link_to_ints(link)
         self.eG.add_link(sender, receiver, link)
+
+        # if receiver is a rootnode, it needs to be removed from rootnodes
 
         # app_data -> (link_id1, link_id2)
         dpg.add_node_link(link[0], link[1], label=link, parent=self.id)
 
     def _delink_callback(self, sender, app_data):
         """ Callback to unlink nodes in the editor. """
-        link = dpg.get_item_label(app_data)
-        
-        link = link_to_sender_receiver(link)
-      
         if len(self.eG.nodes[sender]) == 1 and self.eG.nodes[sender] == ChainGraph.Sentinel:
             del(self.eG.nodes[sender])
         else:
+            link = dpg.get_item_label(app_data)
+            link = link_to_sender_receiver(link)
+
             self.eG.nodes[sender].remove(link)
 
         # app_data -> link_id

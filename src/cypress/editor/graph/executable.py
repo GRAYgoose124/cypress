@@ -1,5 +1,8 @@
+import logging 
+
 from cypress.editor.graph.core import ChainGraph
 
+logger = logging.getLogger(__name__)
 
 class ExecutableGraph(ChainGraph):
     def __init__(self) -> None:
@@ -33,6 +36,8 @@ class ExecutableGraph(ChainGraph):
         """ Executes the graph as a set of chains. """
         contexts = []
 
+        logger.debug(f"execute.{self.chains=}")
+
         for roots in self.chains:
             context = None
             if isinstance(roots, int):
@@ -46,6 +51,8 @@ class ExecutableGraph(ChainGraph):
                         context.update(self.execute_chain(root, context))
 
             contexts.append(context)
+
+        logger.debug(f"execute.{contexts=}")
 
         results = [f"{context[self.output]}" if context is not None else "OOPS" for context in contexts]
         return results
