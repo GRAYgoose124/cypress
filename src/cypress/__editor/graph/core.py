@@ -1,5 +1,4 @@
 import logging
-import dearpygui.dearpygui as dpg
 
 from cypress.editor.utils import parse_link_ints_to_str, parse_link_to_ints
 

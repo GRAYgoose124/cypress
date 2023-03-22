@@ -1,4 +1,5 @@
 from Qt import QtWidgets
+from Qt.QtGui import QColor
 
 from NodeGraphQt import BaseNode, BaseNodeCircle, NodeBaseWidget
 
@@ -24,10 +25,18 @@ class TextAreaWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(TextAreaWidget, self).__init__(parent)
         self._text_edit = QtWidgets.QTextEdit(self)
+        palette = self._text_edit.palette()
+        palette.setColor(palette.Base, QColor(0, 0, 0))
+        palette.setColor(palette.Text, QColor(255, 255, 255))
+        self._text_edit.setPalette(palette)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._text_edit)
+
+        self.exe_button = QtWidgets.QPushButton('Execute')
+        layout.addWidget(self.exe_button)
+
 
 
 class NodeTextAreaWidget(NodeBaseWidget):
@@ -53,6 +62,35 @@ class ScriptNode(BaseNode):
         self.add_input('In', multi_input=True)
         self.add_output('Out')
 
-        self.add_custom_widget(NodeTextAreaWidget(self.view), tab="Custom")
+        self._text_widget = NodeTextAreaWidget(self.view)
+        self.add_custom_widget(self._text_widget, tab="Custom")
 
+        self._text_widget.cwidget.exe_button.clicked.connect(self.execute)
+           
+    @property
+    def code(self):
+        """ Get the script code. """
+        return self._text_widget.get_value()
+
+    def execute(self):
+        """ Execute the script. """
+        print(self.code)
+        return self._text_widget.get_value()
+    
+    def execute_chain(self):
+        pass
+
+    def get_all_roots(self):
+        """ Get all root nodes. """
+        roots = []
+
+        connected = self.connected_input_nodes()
+        for node in connected:
+            if not node.connected_input_nodes():
+                yield node
+            else:
+                for root in node.get_all_roots():
+                    yield root
+
+        return roots
     
