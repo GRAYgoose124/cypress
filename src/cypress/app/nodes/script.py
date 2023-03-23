@@ -69,15 +69,18 @@ class ScriptNode(BaseNode):
         self.create_property('Execution.Results', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Execution.Locals', value=None, 
-                                tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
+                                tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
         self.create_property('Execution.Context', value=None,
-                             tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
+                             tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
         self.create_property('Execution.ID', value=None, tab='Execution',
                              widget_type=NodePropWidgetEnum.QLABEL.value)
         self.create_property('Execution.State', None, tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
 
+
+        self._last_executed = None
+
         self._text_widget = NodeTextAreaWidget(self.view)
-        self.add_custom_widget(self._text_widget, tab="Custom")
+        self.add_custom_widget(self._text_widget)
 
         self._text_widget.cwidget.exe_button.clicked.connect(self.execute)
 
@@ -124,11 +127,18 @@ class ScriptNode(BaseNode):
         code = self.code
 
         already_exist = list(context.keys())
+        old_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
         try:
             exec(code, context)
+    
+            new_locals = {k: context[k] for k in context.keys() if k not in already_exist and k != '__builtins__'}
 
-            self._locals = {k: context[k] for k in context.keys() if k not in already_exist and k != '__builtins__'}
-            self.set_property('Execution.Locals', self._locals)
+            new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+            if old_results != new_results:
+                new_locals[ScriptNode.SCRIPT_OUTVAR] = new_results
+
+            self._locals = new_locals
+            self.set_property('Execution.Locals', new_locals)
             self.set_property('Execution.State', 'Success')
         except Exception as e:
             e_msg = f"Error on {self.name()}"
@@ -151,6 +161,8 @@ class ScriptNode(BaseNode):
         for node in self.code_inputs:
             node.execute_tree(ctx=context)
 
-        self._exe_func(context)
+        if self._last_executed != context['__execution_id']:
+            self._last_executed = context['__execution_id']
+            self._exe_func(context)
 
         return context

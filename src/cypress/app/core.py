@@ -50,6 +50,11 @@ class App(QtWidgets.QApplication):
         s2b.set_output(0, s3b.input(0))
         s3.set_output(0, s3b.input(0))
 
+        graph.select_all()
+        graph.auto_layout_nodes()
+        graph.fit_to_selection()
+        graph.clear_selection()
+
     def setup(self):
         graph = NodeGraph()
         self.graph = graph
@@ -75,11 +80,7 @@ class App(QtWidgets.QApplication):
         graph.widget.resize(*self.size)
         graph.widget.show()
 
-        self.__build_demo_graph(graph)
-
-        # fit nodes to the viewer.
-        graph.clear_selection()
-        graph.fit_to_selection()
+        self.__build_demo_graph(graph)   
 
         return self
 
