@@ -9,6 +9,7 @@ from NodeGraphQt import (
     NodesPaletteWidget
 )
 
+from .graph import ChainGraph
 
 from .nodes import ScriptNode
 
@@ -33,7 +34,7 @@ class App(QtWidgets.QApplication):
         s2.set_output(0, s3.input(0))
 
     def setup(self):
-        graph = NodeGraph()
+        graph = ChainGraph()
         self.graph = graph
 
         graph.set_context_menu_from_file(Path(__file__).parent / 'hotkeys/hotkeys.json')
@@ -56,7 +57,7 @@ class App(QtWidgets.QApplication):
         graph.widget.resize(*self.size)
         graph.widget.show()
 
-        # self._build_toolbox_gui()
+        self._build_toolbox_gui()
         self.__build_demo_graph(graph)
 
         # fit nodes to the viewer.
@@ -68,7 +69,7 @@ class App(QtWidgets.QApplication):
     def _build_toolbox_gui(self):
         # Add execute button to the main window.
         self.exec_button = QtWidgets.QPushButton("Execute")
-        # self.exec_button.clicked.connect(self.code_graph.execute)
+        self.exec_button.clicked.connect(self.graph.execute)
         self.exec_button.show()
 
     def run(self, setup=False):
