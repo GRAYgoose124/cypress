@@ -14,12 +14,8 @@ from NodeGraphQt.constants import NodePropWidgetEnum
 logger = logging.getLogger(__name__)
 
 
-def flatten(l):
-    f = []
-    for sl in l:
-        f.extend(sl)
-
-    return f
+class ScriptNodeExecutionError(Exception):
+    pass
 
 
 class TextAreaWidget(QtWidgets.QWidget):
@@ -74,16 +70,16 @@ class ScriptNode(BaseNode):
         self.add_input(ScriptNode.CHAINED_PORT_IN, multi_input=True)
         self.add_output(ScriptNode.CHAINED_PORT_OUT)
 
+        self.create_property('State', None, 
+                        tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
+        self.create_property('ID', value=None, 
+                             tab='Execution', widget_type=NodePropWidgetEnum.QLABEL.value)
         self.create_property('Results', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Locals', value=None, 
                                 tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
         self.create_property('Context', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
-        self.create_property('ID', value=None, 
-                             tab='Execution', widget_type=NodePropWidgetEnum.QLABEL.value)
-        self.create_property('State', None, 
-                             tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
 
         self._last_executed = None
 
@@ -115,8 +111,12 @@ class ScriptNode(BaseNode):
 
     def execute(self):
         """ Execute the script. """
-        context = self.execute_tree()
-
+        try:
+            context = self.execute_tree()
+        except ScriptNodeExecutionError as e:
+            logger.error(e.args[0])
+            return
+        
         # Only update executed node's Results and Context properties.
         del context['__builtins__']
         results = context[ScriptNode.SCRIPT_OUTVAR]
@@ -126,13 +126,15 @@ class ScriptNode(BaseNode):
 
     # executable
     def execute_tree(self, ctx=None):
-        """ Execute the tree rooted at this node with a unified context. """
+        """ Execute the tree flowing into this node with a unified context. """
         # If a context is provided, use it. Otherwise, create a new one.
         if ctx is not None:
             context = ctx
         else:
-            exe_id = f"{time.time_ns()}x{random.randint(0, 1000000)}".encode('utf-8')
-            exe_id = codecs.encode(exe_id, 'base64')
+            # Set the execution ID for this tree.
+            exe_id = f"{random.randint(0, 1000000)}{str(time.time_ns())[-10:]}".encode('utf-8')
+            exe_id = codecs.encode(exe_id, 'base64').decode('utf-8')
+
             context = {ScriptNode.SCRIPT_OUTVAR: None, '__execution_id': exe_id}
 
         # Execute all input nodes prior to this node's execution
@@ -144,43 +146,46 @@ class ScriptNode(BaseNode):
         return context
 
     def execute_node(self, context):
+        # Do not execute if there is no code.
+        if self.code is None:
+            return
+        
+        # Set up execution state.
         if '__execution_id' not in context:
-            context['__execution_id'] = "ORPHANED"
+            self.set_property('ID', "ORPHANED")
         else:
             # Prevent the node from executing multiple times in the same execution cycle.
             if self._last_executed != context['__execution_id']:
                 self._last_executed = context['__execution_id']
+                self.set_property('ID', context['__execution_id'])
             else:
-                return context
+                return
             
-        # Do not execute if there is no code.
-        if self.code is None:
-            return context
-
         already_created_vars = list(context.keys())
         prior_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+        success = None
 
         # Try to execute this node.
         try:
             exec(self.code, context)
+            success = True
         except Exception as e:
-            logger.error(f"Error at {self.name()}")
             traceback.print_exc()
+            success = False
 
+        if success:
+            # Locals added to the context at this node.
+            locals_added_by_this_node = {k: context[k] for k in context.keys() if k not in already_created_vars and k != '__builtins__'}
+
+            # If the output variable has changed, add it to the locals for this node.
+            new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+            if prior_results != new_results:
+                locals_added_by_this_node[ScriptNode.SCRIPT_OUTVAR] = new_results
+
+            self.set_property('Locals', locals_added_by_this_node)
+            self.set_property('State', 'Success')
+        else:
             self.set_property('Locals', None)
-            self.set_property('State', f"Error: {e}")
+            self.set_property('State', 'Error')
 
-            return context
-        finally:
-            self.set_property('ID', context['__execution_id'] or None)
-
-        # Locals added to the context at this node.
-        locals_added_by_this_node = {k: context[k] for k in context.keys() if k not in already_created_vars and k != '__builtins__'}
-
-        # If the output variable has changed, add it to the locals for this node.
-        new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
-        if prior_results != new_results:
-            locals_added_by_this_node[ScriptNode.SCRIPT_OUTVAR] = new_results
-
-        self.set_property('Locals', locals_added_by_this_node)
-        self.set_property('State', 'Success')
+            raise ScriptNodeExecutionError(f"Error at {self.name()}. See console for details.")
