@@ -1,7 +1,7 @@
 import logging
 import signal
 
-from .app.core import App
+from cypress.app.core import App
 
 
 logger = logging.getLogger(__name__)

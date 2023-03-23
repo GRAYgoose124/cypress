@@ -1,24 +1,12 @@
+import logging
+import traceback
 from Qt import QtWidgets
 from Qt.QtGui import QColor
 
 from NodeGraphQt import BaseNode, BaseNodeCircle, NodeBaseWidget
 
 
-# def create_script_node(
-#     name: str,
-#     size: tuple[float, float] = (150, 200),
-#     pos: tuple[float, float] = (0, 0),
-#     parent = None
-# ):
-#     with dpg.node(label="Script", pos=pos, parent=parent) as n_id:
-#         dpg.add_node_attribute(tag=f"{n_id}.In", attribute_type=dpg.mvNode_Attr_Input)
-#         dpg.add_node_attribute(tag=f"{n_id}.Out", attribute_type=dpg.mvNode_Attr_Output)
-
-#         with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static):
-#             dpg.add_input_text(tag=f"{n_id}.Code", multiline=True, width=size[1], height=size[0])
-            
-#         return n_id
-
+logger = logging.getLogger(__name__)
 
 class TextAreaWidget(QtWidgets.QWidget):
     """ Text area widget for ScriptNode. """
@@ -36,7 +24,6 @@ class TextAreaWidget(QtWidgets.QWidget):
 
         self.exe_button = QtWidgets.QPushButton('Execute')
         layout.addWidget(self.exe_button)
-
 
 
 class NodeTextAreaWidget(NodeBaseWidget):
@@ -62,6 +49,9 @@ class ScriptNode(BaseNode):
         self.add_input('In', multi_input=True)
         self.add_output('Out')
 
+        self.execution_id = None
+        self.script_output = 'Final'
+
         self._text_widget = NodeTextAreaWidget(self.view)
         self.add_custom_widget(self._text_widget, tab="Custom")
 
@@ -71,26 +61,56 @@ class ScriptNode(BaseNode):
     def code(self):
         """ Get the script code. """
         return self._text_widget.get_value()
+    
+    @code.setter
+    def code(self, value):
+        """ Set the script code. """
+        self._text_widget.set_value(value)
+    
+    @property
+    def code_inputs(self):
+        """ Get all input nodes. """
+        items = self.connected_input_nodes().items()
+        nodes = list(filter(lambda x: x[0].name()[0] == 'In', items ))
+        return [n[1] for n in nodes]
+    
+    @property
+    def code_outputs(self):
+        """ Get all output nodes. """
+        items = self.connected_output_nodes().items()
+        nodes = list(filter(lambda x: x[0].name()[0] == 'Out', items ))
+        return [n[1] for n in nodes]
 
     def execute(self):
         """ Execute the script. """
-        print(self.code)
-        return self._text_widget.get_value()
+        self.execute_tree()
     
-    def execute_chain(self):
-        pass
+    # executable
+    def _exe_func(self, context):
+        """ Execution wrapper for this node. """
+        if self.code is None:
+            return context
+            
+        try:
+            exec(self.code, context)
+        except Exception as e:
+            logger.info(f"Error on {self.name()} with context: {context[self.script_output]}")
+            traceback.print_exc()
+        
+        return context
 
-    def get_all_roots(self):
-        """ Get all root nodes. """
-        roots = []
+    def execute_tree(self, ctx=None):
+        """ Execute the tree rooted at this node with a unified context. """
+        if ctx is not None:
+            context = ctx
+        else:
+            context = {self.script_output: None}
+       
+        for node in self.code_inputs:
+            node.execute_tree(ctx=context)
 
-        connected = self.connected_input_nodes()
-        for node in connected:
-            if not node.connected_input_nodes():
-                yield node
-            else:
-                for root in node.get_all_roots():
-                    yield root
+        self._exe_func(context)
 
-        return roots
+        return context
+
     

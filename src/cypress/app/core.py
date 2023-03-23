@@ -9,7 +9,6 @@ from NodeGraphQt import (
     NodesPaletteWidget
 )
 
-from .graph import ChainGraph
 
 from .nodes import ScriptNode
 
@@ -25,16 +24,19 @@ class App(QtWidgets.QApplication):
         super().__init__([])
 
     def __build_demo_graph(self, graph: NodeGraph):
-        print(graph.node_factory.nodes)
         s1 = graph.create_node('cypress.nodes.ScriptNode.ScriptNode', name='Script Node 1', pos=[0, 0])
         s2 = graph.create_node('cypress.nodes.ScriptNode.ScriptNode', name='Script Node 2', pos=[400, 0])
         s3 = graph.create_node('cypress.nodes.ScriptNode.ScriptNode', name='Script Node 3', pos=[800, 0])
+
+        s1.code = "print('Hello from Script Node 1!')"
+        s2.code = "print('Hello from Script Node 2!')"
+        s3.code = "print('Hello from Script Node 3!')"
 
         s1.set_output(0, s2.input(0))
         s2.set_output(0, s3.input(0))
 
     def setup(self):
-        graph = ChainGraph()
+        graph = NodeGraph()
         self.graph = graph
 
         graph.set_context_menu_from_file(Path(__file__).parent / 'hotkeys/hotkeys.json')
@@ -57,7 +59,6 @@ class App(QtWidgets.QApplication):
         graph.widget.resize(*self.size)
         graph.widget.show()
 
-        self._build_toolbox_gui()
         self.__build_demo_graph(graph)
 
         # fit nodes to the viewer.
@@ -65,16 +66,9 @@ class App(QtWidgets.QApplication):
         graph.fit_to_selection()
 
         return self
-    
-    def _build_toolbox_gui(self):
-        # Add execute button to the main window.
-        self.exec_button = QtWidgets.QPushButton("Execute")
-        self.exec_button.clicked.connect(self.graph.execute)
-        self.exec_button.show()
 
     def run(self, setup=False):
         if setup:
             self.setup()
-            
-            
+               
         self.exec_()
