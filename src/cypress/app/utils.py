@@ -4,7 +4,7 @@ from NodeGraphQt import NodeGraph
 def build_demo_graph(graph: NodeGraph):
         def create_node(label, pos):
             node = graph.create_node(
-                'cypress.nodes.ScriptNode.ScriptNode', name=f'Script Node {label}', pos=pos)
+                'cypress.nodes.ScriptNode', name=f'Script Node {label}', pos=pos)
             return node
 
         s1 = create_node(1, [0, 0])
@@ -14,7 +14,7 @@ def build_demo_graph(graph: NodeGraph):
         s3b = create_node("3B", [800, 200])
 
         output = graph.create_node(
-            'cypress.nodes.SimpleOutputNode.SimpleOutputNode', name='Output', pos=[800, 600])
+            'cypress.nodes.SimpleOutputNode', name='Output', pos=[800, 600])
 
         s1.code = "print('Hello from Script Node 1!')\na=5"
         s2.code = "print('Hello from Script Node 2!')\nb=10"

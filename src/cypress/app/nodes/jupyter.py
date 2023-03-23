@@ -1,0 +1,4 @@
+
+
+class QConsoleNode(BaseNode):
+    __

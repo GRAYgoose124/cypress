@@ -20,10 +20,27 @@ class SimpleOutputWidget(QtWidgets.QWidget):
         palette.setColor(palette.Foreground, QColor(255, 255, 255))
         self._result_label = QtWidgets.QLabel(f"", self, palette=palette, font=font)
 
+        self.selected_outvar = QtWidgets.QLineEdit(self)
+        self.selected_outvar.setPlaceholderText(ScriptNode.SCRIPT_OUTVAR)
+
+        self.console_variable = QtWidgets.QLineEdit(self)
+        self.console_variable.setPlaceholderText("context")
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._result_label)
-        layout.addWidget(self.checkbox)
+
+        sublayouta = QtWidgets.QVBoxLayout()
+        sublayouta.setContentsMargins(0, 0, 0, 0)
+        sublayouta.addWidget(self._result_label)
+        sublayouta.addWidget(self.selected_outvar)
+
+        sublayoutb = QtWidgets.QHBoxLayout()
+        sublayoutb.setContentsMargins(0, 0, 0, 0)
+        sublayoutb.addWidget(self.checkbox)
+        sublayoutb.addWidget(self.console_variable)
+
+        layout.addLayout(sublayouta)
+        layout.addLayout(sublayoutb)
 
 
 class NodeSimpleOutputWidget(NodeBaseWidget):
@@ -40,7 +57,7 @@ class NodeSimpleOutputWidget(NodeBaseWidget):
     
 
 class SimpleOutputNode(BaseNode):
-    __identifier__ = 'cypress.nodes.SimpleOutputNode'
+    __identifier__ = 'cypress.nodes'
 
     NODE_NAME = 'SimpleOutput'
 
@@ -57,6 +74,13 @@ class SimpleOutputNode(BaseNode):
 
         self.watched_node = None
 
+        self.outvar = ScriptNode.SCRIPT_OUTVAR
+        self._node_widget.cwidget.selected_outvar.textChanged.connect(self.update_outvar)
+
+        self.console_variable = "context"
+        self._node_widget.cwidget.console_variable.textChanged.connect(self.update_console_variable)
+
+
     def on_input_connected(self, in_port, out_port):
         self.watched_node = out_port.node()
 
@@ -65,7 +89,7 @@ class SimpleOutputNode(BaseNode):
     @Slot(object)
     def update_output(self, context):
         self.context = context
-        self._node_widget.set_value(str(context[ScriptNode.SCRIPT_OUTVAR]))
+        self._node_widget.set_value(str(context[self.outvar]))
 
     def allow_send_to_console(self, state):
         if state == Qt.Checked:
@@ -76,4 +100,12 @@ class SimpleOutputNode(BaseNode):
     @Slot(object)
     def send_to_console(self, context):    
         # embed context in jupyter kernel
-        self.graph.kernel_client.execute(f"context = {context}")
+        self.graph.kernel_client.execute(f"{self.console_variable} = {context}")
+
+    @Slot(str)
+    def update_outvar(self, outvar):
+        self.outvar = outvar
+
+    @Slot(str)
+    def update_console_variable(self, console_variable):
+        self.console_variable = console_variable

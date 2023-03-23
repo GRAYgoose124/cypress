@@ -59,7 +59,7 @@ class ScriptNode(QObject, BaseNode):
         ScriptNodes with 'In' -> 'Out' connections will be executed 
         with a unified context.
     """
-    __identifier__ = 'cypress.nodes.ScriptNode'
+    __identifier__ = 'cypress.nodes'
     NODE_NAME = 'Script'
 
     CHAINED_PORT_IN = 'In'
