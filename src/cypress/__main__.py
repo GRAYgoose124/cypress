@@ -5,10 +5,12 @@ from cypress.app.core import App
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger("traitlets").setLevel(logging.WARNING)
+    
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     app = App().setup()

@@ -1,6 +1,6 @@
-from Qt import QtWidgets
-from Qt.QtGui import QColor, QPalette, QFont
-from Qt.QtCore import Signal, Slot, Qt
+from qtpy import QtWidgets
+from qtpy.QtGui import QColor, QPalette, QFont
+from qtpy.QtCore import Signal, Slot, Qt
 from NodeGraphQt import BaseNode, NodeBaseWidget
 
 from cypress.app.nodes.script import ScriptNode
@@ -19,7 +19,7 @@ class SimpleOutputWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._result_label, alignment=Qt.AlignCenter)
+        layout.addWidget(self._result_label, alignment=Qt.AlignLeft)
 
 
 class NodeSimpleOutputWidget(NodeBaseWidget):

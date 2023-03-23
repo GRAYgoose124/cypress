@@ -8,14 +8,12 @@ packages = [{include = "cypress", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-Pillow = "^9.3.0"
 numpy = "^1.23.5"
 matplotlib = "^3.6.2"
-networkx = "^2.8.8"
-dearpygui = "^1.8.0"
-pyglfw = "^0.2.2"
-nodegraphqt = {git = "https://github.com/jchanvfx/NodeGraphQt.git"}
+
 qt-py = "^1.3.8"
+nodegraphqt = {git = "https://github.com/jchanvfx/NodeGraphQt.git"}
+qtconsole = {git = "https://github.com/jupyter/qtconsole.git"}
 
 
 [build-system]

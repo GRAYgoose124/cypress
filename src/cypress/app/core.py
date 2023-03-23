@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from NodeGraphQt import (
     NodeGraph,
@@ -10,6 +10,7 @@ from NodeGraphQt import (
 )
 
 from cypress.app.utils import build_demo_graph
+from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
 
 from .nodes import ScriptNode, SimpleOutputNode
@@ -23,6 +24,8 @@ class App(QtWidgets.QApplication):
         self.size = (1280, 720)
 
         self.graph = None
+
+        self.console = None
 
         super().__init__([])
 
@@ -50,14 +53,20 @@ class App(QtWidgets.QApplication):
         graph.node_double_clicked.connect(display_properties_bin)
 
         graph.widget.resize(*self.size)
-        graph.widget.show()
-
         build_demo_graph(graph)   
 
+        # build the console
+        self.console = make_jupyter_widget_with_kernel()
+
         return self
+
+    def show(self):
+        self.graph.widget.show()
+        self.console.show()
 
     def run(self, setup=False):
         if setup:
             self.setup()
 
+        self.show()
         self.exec_()

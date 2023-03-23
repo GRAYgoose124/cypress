@@ -4,9 +4,9 @@ import random
 import time
 import traceback
 
-from Qt import QtWidgets
-from Qt.QtGui import QColor
-from Qt.QtCore import Signal, Slot, QObject
+from qtpy import QtWidgets
+from qtpy.QtGui import QColor
+from qtpy.QtCore import Signal, Slot, QObject
 
 from NodeGraphQt import BaseNode, NodeBaseWidget
 from NodeGraphQt.constants import NodePropWidgetEnum
@@ -92,8 +92,6 @@ class ScriptNode(QObject, BaseNode):
         self.add_custom_widget(self._text_widget)
 
         self._text_widget.cwidget.exe_button.clicked.connect(self.execute)
-
-        #self.output_updated = 
 
     @property
     def code(self):
