@@ -14,7 +14,7 @@ from cypress.app.utils import build_demo_graph
 from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
 
-from .nodes import ScriptNode, SimpleOutputNode, QConsoleNode
+from .nodes import *
 
 
 class CypressWindow(QtWidgets.QMainWindow):
@@ -25,11 +25,11 @@ class CypressWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('Cypress')
 
         self.graph = NodeGraph()
-        self.console = make_jupyter_widget_with_kernel()
-        self.graph.kernel_manager = self.console.kernel_manager
-        self.graph.kernel_client = self.console.kernel_client
+        self.console_widget = make_jupyter_widget_with_kernel()
+        self.graph.kernel_manager = self.console_widget.kernel_manager
+        self.graph.kernel_client = self.console_widget.kernel_client
 
-        self.console.setWindowFlags(QtCore.Qt.Tool)
+        self.console_widget.setWindowFlags(QtCore.Qt.Tool)
 
         self.propbins_widget = PropertiesBinWidget(node_graph=self.graph)
         self.propbins_widget.setWindowFlags(QtCore.Qt.Tool)
@@ -38,7 +38,7 @@ class CypressWindow(QtWidgets.QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
 
         tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(self.console, 'Console')
+        tab_widget.addTab(self.console_widget, 'Console')
         tab_widget.addTab(PropertiesBinWidget(node_graph=self.graph), 'Properties')
 
         layout.addWidget(self.graph.widget)
@@ -55,7 +55,8 @@ class CypressWindow(QtWidgets.QMainWindow):
         self.graph.register_nodes([
             ScriptNode,
             SimpleOutputNode,
-            QConsoleNode
+            ImageNode
+            #QConsoleNode   # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
         ])
 
         build_demo_graph(self.graph)   
@@ -70,5 +71,5 @@ class CypressWindow(QtWidgets.QMainWindow):
         return self
 
     def quit(self):
-        self.console.kernel_client.stop_channels()
-        self.console.kernel_manager.shutdown_kernel()
+        self.console_widget.kernel_client.stop_channels()
+        self.console_widget.kernel_manager.shutdown_kernel()

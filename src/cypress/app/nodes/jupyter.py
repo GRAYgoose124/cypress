@@ -14,11 +14,11 @@ class QConsoleNodeWidget(NodeBaseWidget):
     def get_value(self):
         pass
 
+
 class QConsoleNode(BaseNode):
     __identifier__ = 'cypress.nodes'
 
     NODE_NAME = 'QConsole'
-
 
     def __init__(self):
         super(QConsoleNode, self).__init__()
@@ -31,7 +31,6 @@ class QConsoleNode(BaseNode):
     def start_console(self):
         w = self.console_widget.cwidget
         w.kernel_manager = self.graph.kernel_manager
-        print(f"{w.kernel_manager=}")
         w.kernel_client = self.graph.kernel_manager.client()
         w.kernel_client.start_channels()
 

@@ -58,7 +58,6 @@ class NodeSimpleOutputWidget(NodeBaseWidget):
 
 class SimpleOutputNode(BaseNode):
     __identifier__ = 'cypress.nodes'
-
     NODE_NAME = 'SimpleOutput'
 
     CHAINED_PORT_IN = ScriptNode.CHAINED_PORT_IN
