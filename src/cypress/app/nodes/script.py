@@ -6,6 +6,7 @@ import traceback
 
 from Qt import QtWidgets
 from Qt.QtGui import QColor
+from Qt.QtCore import Signal, Slot, QObject
 
 from NodeGraphQt import BaseNode, NodeBaseWidget
 from NodeGraphQt.constants import NodePropWidgetEnum
@@ -51,7 +52,7 @@ class NodeTextAreaWidget(NodeBaseWidget):
         return self.cwidget._text_edit.toPlainText()
 
 
-class ScriptNode(BaseNode):
+class ScriptNode(QObject, BaseNode):
     """ Executable script node. 
     
         ScriptNodes with 'In' -> 'Out' connections will be executed 
@@ -65,8 +66,12 @@ class ScriptNode(BaseNode):
     
     SCRIPT_OUTVAR = 'Final'
 
+    output_updated = Signal(object)
+
     def __init__(self):
-        super(ScriptNode, self).__init__()
+        QObject.__init__(self)
+        BaseNode.__init__(self)
+
         self.add_input(ScriptNode.CHAINED_PORT_IN, multi_input=True)
         self.add_output(ScriptNode.CHAINED_PORT_OUT)
 
@@ -87,6 +92,8 @@ class ScriptNode(BaseNode):
         self.add_custom_widget(self._text_widget)
 
         self._text_widget.cwidget.exe_button.clicked.connect(self.execute)
+
+        #self.output_updated = 
 
     @property
     def code(self):
@@ -120,6 +127,8 @@ class ScriptNode(BaseNode):
         # Only update executed node's Results and Context properties.
         del context['__builtins__']
         results = context[ScriptNode.SCRIPT_OUTVAR]
+
+        self.output_updated.emit(results)
 
         self.set_property('Results', results)
         self.set_property('Context', context)
