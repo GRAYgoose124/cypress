@@ -67,7 +67,7 @@ class ScriptNode(QObject, BaseNode):
     
     SCRIPT_OUTVAR = 'Final'
 
-    output_updated = Signal(object)
+    execution_update = Signal(object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -127,7 +127,7 @@ class ScriptNode(QObject, BaseNode):
         del context['__builtins__']
         results = context[ScriptNode.SCRIPT_OUTVAR]
 
-        self.output_updated.emit(results)
+        self.execution_update.emit(context)
 
         self.set_property('Results', results)
         self.set_property('Context', context)

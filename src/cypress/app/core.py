@@ -26,6 +26,8 @@ class CypressWindow(QtWidgets.QMainWindow):
 
         self.graph = NodeGraph()
         self.console = make_jupyter_widget_with_kernel()
+        self.graph.kernel_client = self.console.kernel_client
+
         self.console.setWindowFlags(QtCore.Qt.Tool)
 
         self.propbins_widget = PropertiesBinWidget(node_graph=self.graph)
@@ -64,3 +66,7 @@ class CypressWindow(QtWidgets.QMainWindow):
         self.graph.node_double_clicked.connect(display_properties_bin)
 
         return self
+
+    def quit(self):
+        self.console.kernel_client.stop_channels()
+        self.console.kernel_manager.shutdown_kernel()

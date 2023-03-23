@@ -11,15 +11,19 @@ class SimpleOutputWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(SimpleOutputWidget, self).__init__(parent)
 
+        # to jupyter checkbox
+        self.checkbox = QtWidgets.QCheckBox("To Jupyter", self)
+
         palette = QPalette()
         font = QFont()
-        font.setPointSize(20)
+        font.setPointSize(16)
         palette.setColor(palette.Foreground, QColor(255, 255, 255))
         self._result_label = QtWidgets.QLabel(f"", self, palette=palette, font=font)
 
-        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom, self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._result_label)
+        layout.addWidget(self.checkbox)
 
 
 class NodeSimpleOutputWidget(NodeBaseWidget):
@@ -49,14 +53,27 @@ class SimpleOutputNode(BaseNode):
         self._node_widget = NodeSimpleOutputWidget(self.view)
         self.add_custom_widget(self._node_widget)
 
+        self._node_widget.cwidget.checkbox.stateChanged.connect(self.allow_send_to_console)
+
         self.watched_node = None
 
     def on_input_connected(self, in_port, out_port):
         self.watched_node = out_port.node()
 
-        self.watched_node.output_updated.connect(self.on_results_changed)
+        self.watched_node.execution_update.connect(self.update_output)
 
     @Slot(object)
-    def on_results_changed(self, results):
-        self._node_widget.set_value(str(results))
+    def update_output(self, context):
+        self.context = context
+        self._node_widget.set_value(str(context[ScriptNode.SCRIPT_OUTVAR]))
 
+    def allow_send_to_console(self, state):
+        if state == Qt.Checked:
+            self.watched_node.execution_update.connect(self.send_to_console)
+        else:
+            self.watched_node.execution_update.disconnect(self.send_to_console)
+
+    @Slot(object)
+    def send_to_console(self, context):    
+        # embed context in jupyter kernel
+        self.graph.kernel_client.execute(f"context = {context}")

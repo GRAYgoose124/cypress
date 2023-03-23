@@ -22,6 +22,8 @@ def main():
 
     app.exec_()
 
+    window.quit()
+
 
 
 # Deprecated. Kept for compatibility with pre-PEP 621 entry.
