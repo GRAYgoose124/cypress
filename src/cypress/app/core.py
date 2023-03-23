@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from qtpy import QtWidgets, QtCore
+from qtpy.QtWidgets import QWidget
 
 from NodeGraphQt import (
     NodeGraph,
@@ -16,57 +17,43 @@ from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 from .nodes import ScriptNode, SimpleOutputNode
 
 
-class App(QtWidgets.QApplication):
+class CypressWindow(QtWidgets.QMainWindow):
     """ Main application class. """
 
     def __init__(self) -> None:
+        super().__init__()
         self.title = "Cypress"
-        self.size = (1280, 720)
 
-        self.graph = None
+        self.graph = NodeGraph()
+        self.console = make_jupyter_widget_with_kernel()
 
-        self.console = None
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.graph.widget)
+        layout.addWidget(self.console)
 
-        super().__init__([])
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
     def setup(self):
-        graph = NodeGraph()
-        self.graph = graph
-
-        graph.set_context_menu_from_file(
+        self.graph.set_context_menu_from_file(
             Path(__file__).parent / 'hotkeys/hotkeys.json')
 
-        graph.register_nodes([
+        self.graph.register_nodes([
             ScriptNode,
             SimpleOutputNode
         ])
 
-        # create a node properties bin widget.
-        properties_bin = PropertiesBinWidget(node_graph=graph)
+        properties_bin = PropertiesBinWidget(node_graph=self.graph)
         properties_bin.setWindowFlags(QtCore.Qt.Tool)
 
         def display_properties_bin(node):
             if not properties_bin.isVisible():
                 properties_bin.show()
 
-        # wire function to "node_double_clicked" signal.
-        graph.node_double_clicked.connect(display_properties_bin)
+        self.graph.node_double_clicked.connect(display_properties_bin)
 
-        graph.widget.resize(*self.size)
-        build_demo_graph(graph)   
-
-        # build the console
-        self.console = make_jupyter_widget_with_kernel()
+        build_demo_graph(self.graph)   
 
         return self
-
-    def show(self):
-        self.graph.widget.show()
-        self.console.show()
-
-    def run(self, setup=False):
-        if setup:
-            self.setup()
-
-        self.show()
-        self.exec_()

@@ -1,7 +1,8 @@
 import logging
 import signal
 
-from cypress.app.core import App
+from qtpy.QtWidgets import QApplication
+from cypress.app.core import CypressWindow
 
 
 logger = logging.getLogger(__name__)
@@ -10,11 +11,16 @@ logger = logging.getLogger(__name__)
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.getLogger("traitlets").setLevel(logging.WARNING)
-    
+
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    app = App().setup()
-    app.run()
+    app = QApplication([])
+
+    window = CypressWindow().setup()
+    window.show()
+
+    app.exec_()
+
 
 
 # Deprecated. Kept for compatibility with pre-PEP 621 entry.
