@@ -59,6 +59,8 @@ class ScriptNode(BaseNode):
     __identifier__ = 'cypress.nodes.ScriptNode'
     NODE_NAME = 'Script'
 
+    SCRIPT_OUTVAR = 'Final'
+
     def __init__(self):
         super(ScriptNode, self).__init__()
         self.add_input('In', multi_input=True)
@@ -66,11 +68,13 @@ class ScriptNode(BaseNode):
 
         self.create_property('Execution.Results', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
+        self.create_property('Execution.Locals', value=None, 
+                                tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Execution.Context', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Execution.ID', value=None, tab='Execution',
                              widget_type=NodePropWidgetEnum.QLABEL.value)
-        self.create_property('ERROR_STATE', False, tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
+        self.create_property('Execution.State', None, tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
 
         self._text_widget = NodeTextAreaWidget(self.view)
         self.add_custom_widget(self._text_widget, tab="Custom")
@@ -104,8 +108,9 @@ class ScriptNode(BaseNode):
     def execute(self):
         """ Execute the script. """
         context = self.execute_tree()
+        del context['__builtins__']
 
-        results = context['Final']
+        results = context[ScriptNode.SCRIPT_OUTVAR]
 
         self.set_property('Execution.Results', results)
         self.set_property('Execution.Context', context)
@@ -116,15 +121,22 @@ class ScriptNode(BaseNode):
         if self.code is None:
             return context
 
+        code = self.code
+
+        already_exist = list(context.keys())
         try:
-            exec(self.code, context)
-            self.set_property('Execution.ID', context['__execution_id'])
-            self.set_property('ERROR_STATE', False)
+            exec(code, context)
+
+            self._locals = {k: context[k] for k in context.keys() if k not in already_exist and k != '__builtins__'}
+            self.set_property('Execution.Locals', self._locals)
+            self.set_property('Execution.State', 'Success')
         except Exception as e:
             e_msg = f"Error on {self.name()}"
             logger.error(e_msg)
             traceback.print_exc()
-            self.set_property('ERROR_STATE', f"{e}")
+            self.set_property('Execution.State', f"Error: {e}")
+        finally:
+            self.set_property('Execution.ID', context['__execution_id'])
 
         return context
 
@@ -134,7 +146,7 @@ class ScriptNode(BaseNode):
             context = ctx
         else:
             exe_id = f"{time.time_ns()}x{random.randint(0, 1000000)}"
-            context = {'Final': None, '__execution_id': exe_id}
+            context = {ScriptNode.SCRIPT_OUTVAR: None, '__execution_id': exe_id}
 
         for node in self.code_inputs:
             node.execute_tree(ctx=context)
