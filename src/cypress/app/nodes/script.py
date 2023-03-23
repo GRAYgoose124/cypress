@@ -65,12 +65,12 @@ class ScriptNode(BaseNode):
         self.add_output('Out')
 
         self.create_property('Execution.Results', value=None,
-                             tab='Execution', widget_type=NodePropWidgetEnum.QLABEL.value)
+                             tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Execution.Context', value=None,
-                             tab='Execution', widget_type=NodePropWidgetEnum.QLABEL.value)
+                             tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
         self.create_property('Execution.ID', value=None, tab='Execution',
                              widget_type=NodePropWidgetEnum.QLABEL.value)
-        self.create_property('ERROR_STATE', False)
+        self.create_property('ERROR_STATE', False, tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
 
         self._text_widget = NodeTextAreaWidget(self.view)
         self.add_custom_widget(self._text_widget, tab="Custom")
@@ -121,11 +121,10 @@ class ScriptNode(BaseNode):
             self.set_property('Execution.ID', context['__execution_id'])
             self.set_property('ERROR_STATE', False)
         except Exception as e:
-            e_msg = f"Error on {self.name()} with context: {context}"
-            logger.info(e_msg)
+            e_msg = f"Error on {self.name()}"
+            logger.error(e_msg)
             traceback.print_exc()
-
-            self.set_property('ERROR_STATE', f"{e_msg}\n{e}")
+            self.set_property('ERROR_STATE', f"{e}")
 
         return context
 

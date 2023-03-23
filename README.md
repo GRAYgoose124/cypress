@@ -4,7 +4,7 @@ Cypress is a simple node-based Python editor.
 
 ![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_1.png)
 
-It utilizes [dearpygui](https://github.com/hoffstadt/DearPyGui) for the node editor and windowing system.
+It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node editor, and `Qt.py` for Qt bindings. 
 
 ## Installation
     > poetry install
@@ -17,8 +17,3 @@ On windows you may need to install the latest graphviz and run:
 
 ### Run
     > cypress
-
-## To-do
-- `asyncio` nodes
-- node `ABCMeta`
-- tests
