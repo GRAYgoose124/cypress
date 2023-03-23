@@ -26,11 +26,20 @@ class CypressWindow(QtWidgets.QMainWindow):
 
         self.graph = NodeGraph()
         self.console = make_jupyter_widget_with_kernel()
+        self.console.setWindowFlags(QtCore.Qt.Tool)
+
+        self.propbins_widget = PropertiesBinWidget(node_graph=self.graph)
+        self.propbins_widget.setWindowFlags(QtCore.Qt.Tool)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+
+        tab_widget = QtWidgets.QTabWidget()
+        tab_widget.addTab(self.console, 'Console')
+        tab_widget.addTab(PropertiesBinWidget(node_graph=self.graph), 'Properties')
+
         layout.addWidget(self.graph.widget)
-        layout.addWidget(self.console)
+        layout.addWidget(tab_widget)
 
         central_widget = QWidget()
         central_widget.setLayout(layout)
@@ -45,15 +54,13 @@ class CypressWindow(QtWidgets.QMainWindow):
             SimpleOutputNode
         ])
 
-        properties_bin = PropertiesBinWidget(node_graph=self.graph)
-        properties_bin.setWindowFlags(QtCore.Qt.Tool)
-
+        build_demo_graph(self.graph)   
+   
         def display_properties_bin(node):
-            if not properties_bin.isVisible():
-                properties_bin.show()
+            if not self.propbins_widget.isVisible():
+                self.propbins_widget.show()
+                self.propbins_widget.raise_()
 
         self.graph.node_double_clicked.connect(display_properties_bin)
-
-        build_demo_graph(self.graph)   
 
         return self

@@ -24,7 +24,8 @@ class TextAreaWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(TextAreaWidget, self).__init__(parent)
-        self._text_edit = QtWidgets.QTextEdit(self)
+        self._text_edit = QtWidgets.QTextEdit(self, acceptRichText=True,
+                                                sizeAdjustPolicy=QtWidgets.QAbstractScrollArea.AdjustToContents)
 
         palette = self._text_edit.palette()
         palette.setColor(palette.Base, QColor(0, 0, 0))

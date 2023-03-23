@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.getLogger("traitlets").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 

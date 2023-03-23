@@ -17,9 +17,9 @@ class SimpleOutputWidget(QtWidgets.QWidget):
         palette.setColor(palette.Foreground, QColor(255, 255, 255))
         self._result_label = QtWidgets.QLabel(f"", self, palette=palette, font=font)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.TopToBottom, self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._result_label, alignment=Qt.AlignLeft)
+        layout.addWidget(self._result_label)
 
 
 class NodeSimpleOutputWidget(NodeBaseWidget):
