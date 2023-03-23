@@ -1,4 +1,6 @@
 import logging
+import random
+import time
 import traceback
 from Qt import QtWidgets
 from Qt.QtGui import QColor
@@ -7,6 +9,15 @@ from NodeGraphQt import BaseNode, BaseNodeCircle, NodeBaseWidget
 
 
 logger = logging.getLogger(__name__)
+
+
+def flatten(l):
+    f = []
+    for sl in l:
+        f.extend(sl)
+
+    return f
+
 
 class TextAreaWidget(QtWidgets.QWidget):
     """ Text area widget for ScriptNode. """
@@ -71,16 +82,16 @@ class ScriptNode(BaseNode):
     def code_inputs(self):
         """ Get all input nodes. """
         items = self.connected_input_nodes().items()
-        nodes = list(filter(lambda x: x[0].name()[0] == 'In', items ))
-        return [n[1] for n in nodes]
-    
+        nodes = [n[1] for n in filter(lambda x: x[0].name() == 'In', items )]
+        return flatten(nodes)
+
     @property
     def code_outputs(self):
         """ Get all output nodes. """
         items = self.connected_output_nodes().items()
-        nodes = list(filter(lambda x: x[0].name()[0] == 'Out', items ))
-        return [n[1] for n in nodes]
-
+        nodes = [n[1] for n in filter(lambda x: x[0].name() == 'Out', items )]
+        return flatten(nodes)
+    
     def execute(self):
         """ Execute the script. """
         self.execute_tree()
@@ -93,6 +104,7 @@ class ScriptNode(BaseNode):
             
         try:
             exec(self.code, context)
+            self.execution_id = context['__execution_id']
         except Exception as e:
             logger.info(f"Error on {self.name()} with context: {context[self.script_output]}")
             traceback.print_exc()
@@ -104,7 +116,8 @@ class ScriptNode(BaseNode):
         if ctx is not None:
             context = ctx
         else:
-            context = {self.script_output: None}
+            exe_id = f"{time.time_ns()}x{random.randint(0, 1000000)}"
+            context = {self.script_output: None, '__execution_id': exe_id}
        
         for node in self.code_inputs:
             node.execute_tree(ctx=context)
