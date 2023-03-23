@@ -1,0 +1,7 @@
+- [ ] IPython Node
+- [ ] Extractor Nodes
+- - [ ] Plot
+- - [ ] Stdout
+- [ ] Typed Nodes & Ports
+- [ ] GUI Toolbox
+- [ ] GUI Results view

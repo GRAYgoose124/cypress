@@ -1,3 +1,4 @@
+import codecs
 import logging
 import random
 import time
@@ -43,7 +44,7 @@ class TextAreaWidget(QtWidgets.QWidget):
 
 class NodeTextAreaWidget(NodeBaseWidget):
     def __init__(self, parent=None):
-        super(NodeTextAreaWidget, self).__init__(parent)
+        super(NodeTextAreaWidget, self).__init__(parent, name='Code Area')
         self.set_custom_widget(TextAreaWidget())
         self.cwidget = self.get_custom_widget()
 
@@ -55,7 +56,11 @@ class NodeTextAreaWidget(NodeBaseWidget):
 
 
 class ScriptNode(BaseNode):
-    """ Executable script node. """
+    """ Executable script node. 
+    
+        ScriptNodes with 'In' -> 'Out' connections will be executed 
+        with a unified context.
+    """
     __identifier__ = 'cypress.nodes.ScriptNode'
     NODE_NAME = 'Script'
 
@@ -76,7 +81,6 @@ class ScriptNode(BaseNode):
                              widget_type=NodePropWidgetEnum.QLABEL.value)
         self.create_property('Execution.State', None, tab='Execution', widget_type=NodePropWidgetEnum.QLINE_EDIT.value)
 
-
         self._last_executed = None
 
         self._text_widget = NodeTextAreaWidget(self.view)
@@ -87,7 +91,8 @@ class ScriptNode(BaseNode):
     @property
     def code(self):
         """ Get the script code. """
-        return self._text_widget.get_value()
+        code = self._text_widget.get_value()
+        return code
 
     @code.setter
     def code(self, value):
@@ -124,29 +129,32 @@ class ScriptNode(BaseNode):
         if self.code is None:
             return context
 
-        code = self.code
-
         already_exist = list(context.keys())
         old_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+
         try:
-            exec(code, context)
-    
-            new_locals = {k: context[k] for k in context.keys() if k not in already_exist and k != '__builtins__'}
-
-            new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
-            if old_results != new_results:
-                new_locals[ScriptNode.SCRIPT_OUTVAR] = new_results
-
-            self._locals = new_locals
-            self.set_property('Execution.Locals', new_locals)
-            self.set_property('Execution.State', 'Success')
+            exec(self.code, context)
         except Exception as e:
-            e_msg = f"Error on {self.name()}"
-            logger.error(e_msg)
+            logger.error(f"Error at {self.name()}")
             traceback.print_exc()
+
+            self.set_property('Execution.Locals', None)
             self.set_property('Execution.State', f"Error: {e}")
+
+            return context
         finally:
-            self.set_property('Execution.ID', context['__execution_id'])
+            self.set_property('Execution.ID', context['__execution_id'] or None)
+
+        # Locals added to the context at this node.
+        new_locals = {k: context[k] for k in context.keys() if k not in already_exist and k != '__builtins__'}
+
+        # If the output variable has changed, add it to the locals for this node.
+        new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+        if old_results != new_results:
+            new_locals[ScriptNode.SCRIPT_OUTVAR] = new_results
+
+        self.set_property('Execution.Locals', new_locals)
+        self.set_property('Execution.State', 'Success')
 
         return context
 
@@ -155,7 +163,8 @@ class ScriptNode(BaseNode):
         if ctx is not None:
             context = ctx
         else:
-            exe_id = f"{time.time_ns()}x{random.randint(0, 1000000)}"
+            exe_id = f"{time.time_ns()}x{random.randint(0, 1000000)}".encode('utf-8')
+            exe_id = codecs.encode(exe_id, 'base64')
             context = {ScriptNode.SCRIPT_OUTVAR: None, '__execution_id': exe_id}
 
         for node in self.code_inputs:
