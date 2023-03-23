@@ -14,7 +14,7 @@ from cypress.app.utils import build_demo_graph
 from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
 
-from .nodes import ScriptNode, SimpleOutputNode
+from .nodes import ScriptNode, SimpleOutputNode, QConsoleNode
 
 
 class CypressWindow(QtWidgets.QMainWindow):
@@ -22,10 +22,11 @@ class CypressWindow(QtWidgets.QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.title = "Cypress"
+        self.setWindowTitle('Cypress')
 
         self.graph = NodeGraph()
         self.console = make_jupyter_widget_with_kernel()
+        self.graph.kernel_manager = self.console.kernel_manager
         self.graph.kernel_client = self.console.kernel_client
 
         self.console.setWindowFlags(QtCore.Qt.Tool)
@@ -53,7 +54,8 @@ class CypressWindow(QtWidgets.QMainWindow):
 
         self.graph.register_nodes([
             ScriptNode,
-            SimpleOutputNode
+            SimpleOutputNode,
+            QConsoleNode
         ])
 
         build_demo_graph(self.graph)   
