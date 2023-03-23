@@ -1,59 +1,90 @@
-import dearpygui.dearpygui as dpg
+from pathlib import Path
 
-from cypress.app.editor_builder import EditorBuilder
+from Qt import QtWidgets, QtCore
+
+from NodeGraphQt import (
+    NodeGraph,
+    PropertiesBinWidget,
+    NodesTreeWidget,
+    NodesPaletteWidget
+)
 
 
-class App:
-    def __init__(self) -> None:  
+from .nodes import ScriptNode
+
+
+class App(QtWidgets.QApplication):
+    """ Main application class. """
+
+    def __init__(self) -> None:
         self.title = "Cypress"
         self.size = (1280, 720)
-        
-        self.editor = None
 
-        self._selected_node = "Script"
-        self._last_click_pos = (0, 0)
+        self.graph = None
 
-    def run(self):
-        dpg.create_context()
+        super().__init__([])
 
-        with EditorBuilder.build(label="Editor", autosize=True, no_move=True, no_bring_to_front_on_focus=True, no_collapse=True, no_scrollbar=True, on_close=self._close_app_callback) as self.editor:
-            with dpg.group():
-                dpg.add_button(label="Execute", callback=self.editor._execute_graph)
+    def __build_demo_graph(self, graph: NodeGraph):
+        def create_node(label, pos):
+            node = graph.create_node(
+                'cypress.nodes.ScriptNode.ScriptNode', name=f'Script Node {label}', pos=pos)
+            return node
 
-                # TODO: Generate list from .node abc instances.
-                node_options = ("Script", "Color")
-                with dpg.group(horizontal=True):
-                    dpg.add_button(label="Add", callback=lambda s, ad: self.editor._add_new_node_callback(s, self.selected_node, pos=self._last_click_pos))
-                    dpg.add_combo(node_options, no_preview=True, default_value="Script", callback=lambda s, ad: setattr(self, '_selected_node', ad))
+        s1 = create_node(1, [0, 0])
+        s2 = create_node(2, [400, 0])
+        s2b = create_node("2B", [400, 200])
+        s3 = create_node(3, [800, 0])
+        s3b = create_node("3B", [800, 200])
 
-                EditorBuilder.build_output_window(self.editor)
+        s1.code = "print('Hello from Script Node 1!')\na=5"
+        s2.code = "print('Hello from Script Node 2!')\nb=10"
+        s3.code = "print('Hello from Script Node 3!')\nc=a+b\nprint(c)"
 
-        with dpg.handler_registry():
-                dpg.add_key_press_handler(dpg.mvKey_Delete, callback=self.editor._delete_selection)
-                dpg.add_mouse_click_handler(button=dpg.mvMouseButton_Left, callback=self._last_click_location_callback)
+        s2b.code = "print('Hello from Script Node 2B!')\nd=20"
+        s3b.code = "print('Hello from Script Node 3B!')\nFinal=c+d\nprint(Final)"
 
-        dpg.create_viewport(title=self.title, width=self.size[0], height=self.size[1])
+        s1.set_output(0, s2.input(0))
+        s1.set_output(0, s2b.input(0))
 
-        dpg.setup_dearpygui()
-        dpg.show_viewport()
-        dpg.start_dearpygui()
-        dpg.destroy_context()
+        s2.set_output(0, s3.input(0))
+        s2b.set_output(0, s3b.input(0))
+        s3.set_output(0, s3b.input(0))
 
-    @staticmethod
-    def _resize_app_callback():
-        """ Ensures the internal editor is maximized in the main window. """
-        pass
+    def setup(self):
+        graph = NodeGraph()
+        self.graph = graph
 
-    @staticmethod
-    def _close_app_callback():
-        """ Callback for closing the app with DearPyGUI. """
-        # close the window
-        dpg.stop_dearpygui()
+        graph.set_context_menu_from_file(
+            Path(__file__).parent / 'hotkeys/hotkeys.json')
 
-    def _last_click_location_callback(self, sender, app_data):
-        """ Callback for getting the last click location. """
-        self._last_click_pos = dpg.get_mouse_pos()
+        graph.register_nodes([
+            ScriptNode
+        ])
 
-    @property
-    def selected_node(self):
-        return self._selected_node
+        # create a node properties bin widget.
+        properties_bin = PropertiesBinWidget(node_graph=graph)
+        properties_bin.setWindowFlags(QtCore.Qt.Tool)
+
+        def display_properties_bin(node):
+            if not properties_bin.isVisible():
+                properties_bin.show()
+
+        # wire function to "node_double_clicked" signal.
+        graph.node_double_clicked.connect(display_properties_bin)
+
+        graph.widget.resize(*self.size)
+        graph.widget.show()
+
+        self.__build_demo_graph(graph)
+
+        # fit nodes to the viewer.
+        graph.clear_selection()
+        graph.fit_to_selection()
+
+        return self
+
+    def run(self, setup=False):
+        if setup:
+            self.setup()
+
+        self.exec_()

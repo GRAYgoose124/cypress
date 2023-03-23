@@ -1,6 +1,7 @@
 import logging
+import signal
 
-from .app.core import App
+from cypress.app.core import App
 
 
 logger = logging.getLogger(__name__)
@@ -8,7 +9,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def main():
-    app = App()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    app = App().setup()
     app.run()
 
 
