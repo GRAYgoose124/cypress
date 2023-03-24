@@ -10,6 +10,7 @@ It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node 
     > poetry install
 
 with pyside2:
+
     > poetry install [-E pyside2]
 
 On windows you may need to install the latest Graphviz to your PATH and install pygraphviz with something akin to:

@@ -27,7 +27,12 @@ class CypressWindow(QtWidgets.QMainWindow):
         self.graph = NodeGraph()
         self.console_widget = make_jupyter_widget_with_kernel()
         self.graph.kernel_manager = self.console_widget.kernel_manager
-        self.graph.kernel_client = self.console_widget.kernel_client
+        self.graph.kernel_client                                              = self.console_widget.kernel_client
+        
+        bootstrap_script = Path(__file__).parent / 'scripts' / 'kernel_bootstrap.py.format'
+        bootstrap_script = bootstrap_script.read_text().format()
+
+        self.console_widget.kernel_client.execute(bootstrap_script, silent=True)
 
         self.console_widget.setWindowFlags(QtCore.Qt.Tool)
 

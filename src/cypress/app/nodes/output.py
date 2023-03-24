@@ -1,3 +1,4 @@
+from pathlib import Path
 from qtpy import QtWidgets
 from qtpy.QtGui import QColor, QPalette, QFont
 from qtpy.QtCore import Signal, Slot, Qt
@@ -95,10 +96,9 @@ class SimpleOutputNode(BaseNode):
 
     def on_input_disconnected(self, in_port, out_port):
         self.unset_source_node()
-        
+
     @Slot(object)
     def update_output(self, context):
-        print(self.source_node, context)
         self.context = context
         self._node_widget.set_value(str(context[self.outvar]))
 
@@ -114,8 +114,10 @@ class SimpleOutputNode(BaseNode):
         # embed context in jupyter kernel
         import pickle
         pickle_context = pickle.dumps(context)
-        kernel_script = f"import pickle\n{self.console_variable} = pickle.loads({pickle_context})\nNone"
-        self.graph.kernel_client.execute(kernel_script)
+        script_format_str = (Path(__file__).parent.parent / "scripts" / "embed_context.py.format").read_text()
+        kernel_script = script_format_str.format(output_var=self.console_variable, ctx=pickle_context)
+
+        self.graph.kernel_client.execute(kernel_script, silent=True)
 
     def get_from_console(self):
         return self.graph.kernel_client.execute(f"{self.console_variable}")
