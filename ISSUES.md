@@ -1,0 +1,2 @@
+- [ ] Output and Image nodes fail after reloading from json
+- [ ] Image node fails to load if an image loaded during saving.

@@ -79,11 +79,17 @@ class SimpleOutputNode(BaseNode):
         self.console_variable = "context"
         self._node_widget.cwidget.console_variable.textChanged.connect(self.update_console_variable)
 
-
     def on_input_connected(self, in_port, out_port):
         self.watched_node = out_port.node()
 
         self.watched_node.execution_update.connect(self.update_output)
+
+    def on_input_disconnected(self, in_port, out_port):
+        if self.watched_node is None:
+            return
+        
+        self.watched_node.execution_update.disconnect(self.update_output)
+        self.watched_node = None
 
     @Slot(object)
     def update_output(self, context):

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from qtpy import QtWidgets, QtCore
@@ -14,7 +15,33 @@ from cypress.app.utils import build_demo_graph
 from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
 
-from .nodes import *
+from cypress.app.nodes import *
+
+
+class CleansingNodeGraph(NodeGraph):
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
+
+    def save_session(self, file_path):
+        # erase context, results, and locals properties from each node
+        nodes = self.all_nodes()
+        for node in nodes:
+            node.set_property('Context', None)
+            node.set_property('Locals', None)
+            node.set_property('Results', None)
+            if node.NODE_NAME == 'Image':
+                node.set_property('ImageLabel', None)
+
+        serialized_data = self._serialize(nodes)
+
+        file_path = file_path.strip()
+        with open(file_path, 'w') as file_out:
+            json.dump(
+                serialized_data,
+                file_out,
+                indent=2,
+                separators=(',', ':')
+            )
 
 
 class CypressWindow(QtWidgets.QMainWindow):
@@ -24,7 +51,7 @@ class CypressWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle('Cypress')
 
-        self.graph = NodeGraph()
+        self.graph = CleansingNodeGraph()
         self.console_widget = make_jupyter_widget_with_kernel()
         self.graph.kernel_manager = self.console_widget.kernel_manager
         self.graph.kernel_client = self.console_widget.kernel_client

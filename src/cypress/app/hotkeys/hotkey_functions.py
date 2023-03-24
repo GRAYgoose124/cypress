@@ -67,7 +67,7 @@ def save_session(graph):
         viewer = graph.viewer()
         viewer.message_dialog(msg, title='Session Saved')
     else:
-        _save_session_as(graph)
+        save_session_as(graph)
 
 
 def save_session_as(graph):
@@ -78,7 +78,7 @@ def save_session_as(graph):
     file_path = graph.save_dialog(current)
     if file_path:
         graph.save_session(file_path)
-
+    
 
 def new_session(graph):
     """

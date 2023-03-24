@@ -5,6 +5,7 @@ import logging
 import random
 import time
 import traceback
+import types
 import matplotlib
 import matplotlib.figure
 import matplotlib.pyplot as plt
@@ -136,6 +137,15 @@ class ScriptNode(QObject, BaseNode):
         
         # Only update executed node's Results and Context properties.
         del context['__builtins__']
+        # remove all modules 
+        keys = []
+        for k, v in context.items():
+            if isinstance(v, types.ModuleType):
+                keys.append(k)
+
+        for k in keys:
+            del context[k]
+                          
         results = context[ScriptNode.SCRIPT_OUTVAR]
 
         self.execution_update.emit(context)
