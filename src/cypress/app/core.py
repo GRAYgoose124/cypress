@@ -14,7 +14,6 @@ from NodeGraphQt import (
 from cypress.app.utils import build_demo_graph
 from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
-
 from cypress.app.nodes import *
 
 
@@ -29,8 +28,6 @@ class CleansingNodeGraph(NodeGraph):
             node.set_property('Context', None)
             node.set_property('Locals', None)
             node.set_property('Results', None)
-            if node.NODE_NAME == 'Image':
-                node.set_property('ImageLabel', None)
 
         serialized_data = self._serialize(nodes)
 

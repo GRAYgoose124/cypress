@@ -77,7 +77,7 @@ class ScriptNode(QObject, BaseNode):
     SCRIPT_OUTIMAGE = 'Image'
 
     execution_update = Signal(object)
-    image_update = Signal(QtGui.QImage)
+    image_update = Signal(bytes)
 
     def __init__(self):
         QObject.__init__(self)
@@ -219,20 +219,13 @@ class ScriptNode(QObject, BaseNode):
             if ScriptNode.SCRIPT_OUTIMAGE in locals_added_by_this_node:
                 image = locals_added_by_this_node[ScriptNode.SCRIPT_OUTIMAGE]
                 if isinstance(image, np.ndarray):
-                    image = QtGui.QImage(image.data, image.shape[1], image.shape[0], QtGui.QImage.Format_RGB888)
                     self.image_update.emit(image)
-                elif isinstance(image, QtGui.QImage):
-                    self.image_update.emit(image)
-                elif isinstance(image, QtGui.QPixmap):
-                    self.image_update.emit(image.toImage())
                 # matplotlib figure
                 elif isinstance(image, matplotlib.figure.Figure):
                     buf = io.BytesIO()
                     image.savefig(buf, format='png')
                     buf.seek(0)
-                    qimage = QtGui.QImage()
-                    qimage.loadFromData(buf.read())
-                    self.image_update.emit(qimage)
+                    self.image_update.emit(buf.read())
 
             self.set_property('Locals', locals_added_by_this_node)
             self.set_property('State', 'Success')
