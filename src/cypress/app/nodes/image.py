@@ -87,6 +87,10 @@ class NodeImageWidget(NodeBaseWidget):
     
 
 class ImageNode(BaseNode):
+    """ A node that extracts and displays an image from a ScriptNode.
+    
+    Specifically, this node gets an image from a source_node's image_update signal.
+    """
     __identifier__ = 'cypress.nodes'
     NODE_NAME = 'Image'
 

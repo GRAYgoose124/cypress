@@ -150,8 +150,8 @@ class ScriptNode(QObject, BaseNode):
 
         self.execution_update.emit(context)
 
-        self.set_property('Results', results)
-        self.set_property('Context', context)
+        self.set_property('Results', str(results))
+        self.set_property('Context', str(context))
 
     # executable
     def execute_tree(self, ctx=None):
@@ -216,8 +216,8 @@ class ScriptNode(QObject, BaseNode):
                 locals_added_by_this_node[ScriptNode.SCRIPT_OUTVAR] = new_results
 
             # Update image output for Image Node
-            if ScriptNode.SCRIPT_OUTIMAGE in locals_added_by_this_node:
-                image = locals_added_by_this_node[ScriptNode.SCRIPT_OUTIMAGE]
+            if ScriptNode.SCRIPT_OUTIMAGE in context:
+                image = context[ScriptNode.SCRIPT_OUTIMAGE]
                 if isinstance(image, np.ndarray):
                     self.image_update.emit(image)
                 # matplotlib figure
@@ -227,7 +227,7 @@ class ScriptNode(QObject, BaseNode):
                     buf.seek(0)
                     self.image_update.emit(buf.read())
 
-            self.set_property('Locals', locals_added_by_this_node)
+            self.set_property('Locals', str(locals_added_by_this_node))
             self.set_property('State', 'Success')
         else:
             self.set_property('Locals', None)
