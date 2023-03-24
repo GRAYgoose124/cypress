@@ -8,6 +8,9 @@ from qtpy.QtCore import Slot
 class ImageGraphicsWidget(QtWidgets.QGraphicsView):
     def __init__(self, parent=None, image=None):
         super().__init__(parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setMinimumSize(200, 200)
+
         self.image = image
     
     def paintEvent(self, event):
@@ -16,6 +19,7 @@ class ImageGraphicsWidget(QtWidgets.QGraphicsView):
             painter = QtGui.QPainter(self.viewport())
             painter.drawImage(self.rect(), self.image)
             painter.end()
+
 
     def update_image(self, image):
         self.image = image

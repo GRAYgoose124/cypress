@@ -105,7 +105,13 @@ class SimpleOutputNode(BaseNode):
     @Slot(object)
     def send_to_console(self, context):    
         # embed context in jupyter kernel
-        self.graph.kernel_client.execute(f"{self.console_variable} = {context}")
+        import pickle
+        pickle_context = pickle.dumps(context)
+        kernel_script = f"import pickle\n{self.console_variable} = pickle.loads({pickle_context})"
+        self.graph.kernel_client.execute(kernel_script)
+        
+    def get_from_console(self):
+        return self.graph.kernel_client.execute(f"{self.console_variable}")
 
     @Slot(str)
     def update_outvar(self, outvar):
