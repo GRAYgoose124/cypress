@@ -73,3 +73,5 @@ class CypressWindow(QtWidgets.QMainWindow):
     def quit(self):
         self.console_widget.kernel_client.stop_channels()
         self.console_widget.kernel_manager.shutdown_kernel()
+
+        print("Shutdown complete, Goodbye.")

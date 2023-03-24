@@ -16,12 +16,26 @@ def build_demo_graph(graph: NodeGraph):
         output = graph.create_node(
             'cypress.nodes.SimpleOutputNode', name='Output', pos=[800, 600])
 
+        image = graph.create_node(
+            'cypress.nodes.ImageNode', name='Image', pos=[0, 600])
+
+        # This demo string creates a figure to later be displayed in the output node.
+        demo_matplotlib_figure = """
+import matplotlib.pyplot as plt
+import numpy as np
+# create a figure and store in var
+fig = plt.figure()
+# draw a line plot to the figure
+fig.add_subplot(111).plot(np.random.rand(10))
+"""
+
         s1.code = "print('Hello from Script Node 1!')\na=5"
         s2.code = "print('Hello from Script Node 2!')\nb=10"
-        s3.code = "print('Hello from Script Node 3!')\nc=a+b\nprint(c)"
+        s3.code = "print('Hello from Script Node 3!')\nc=a+b\nprint(c)" + demo_matplotlib_figure
 
         s2b.code = "print('Hello from Script Node 2B!')\nd=20"
-        s3b.code = "print('Hello from Script Node 3B!')\nFinal=c+d\nprint(Final)"
+        s3b.code = "print('Hello from Script Node 3B!')\nFinal=c+d\nprint(Final)\nImage = fig"
+
 
         s1.set_output(0, s2.input(0))
         s1.set_output(0, s2b.input(0))
@@ -31,6 +45,7 @@ def build_demo_graph(graph: NodeGraph):
         s3.set_output(0, s3b.input(0))
 
         s3b.set_output(0, output.input(0))
+        image.set_input(0, s3b.output(0))
 
         graph.select_all()
         graph.auto_layout_nodes()

@@ -1,10 +1,17 @@
 import codecs
+from contextlib import redirect_stderr, redirect_stdout
+import io
 import logging
 import random
 import time
 import traceback
+import matplotlib
+import matplotlib.figure
+import matplotlib.pyplot as plt
 
-from qtpy import QtWidgets
+import numpy as np
+
+from qtpy import QtWidgets, QtGui
 from qtpy.QtGui import QColor
 from qtpy.QtCore import Signal, Slot, QObject
 
@@ -66,8 +73,10 @@ class ScriptNode(QObject, BaseNode):
     CHAINED_PORT_OUT = 'Out'
     
     SCRIPT_OUTVAR = 'Final'
+    SCRIPT_OUTIMAGE = 'Image'
 
     execution_update = Signal(object)
+    image_update = Signal(QtGui.QImage)
 
     def __init__(self):
         QObject.__init__(self)
@@ -85,6 +94,8 @@ class ScriptNode(QObject, BaseNode):
         self.create_property('Locals', value=None, 
                                 tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
         self.create_property('Context', value=None,
+                             tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
+        self.create_property('stdout', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
 
         self._last_executed = None
@@ -175,7 +186,11 @@ class ScriptNode(QObject, BaseNode):
 
         # Try to execute this node.
         try:
-            exec(self.code, context)
+            # Capture stdout and stderr.
+            with io.StringIO() as buf, redirect_stdout(buf), redirect_stderr(buf):
+                exec(self.code, context)
+                self.set_property('stdout', buf.getvalue())
+
             success = True
         except Exception as e:
             traceback.print_exc()
@@ -190,6 +205,25 @@ class ScriptNode(QObject, BaseNode):
             if prior_results != new_results:
                 locals_added_by_this_node[ScriptNode.SCRIPT_OUTVAR] = new_results
 
+            # Update image output for Image Node
+            if ScriptNode.SCRIPT_OUTIMAGE in locals_added_by_this_node:
+                image = locals_added_by_this_node[ScriptNode.SCRIPT_OUTIMAGE]
+                if isinstance(image, np.ndarray):
+                    image = QtGui.QImage(image.data, image.shape[1], image.shape[0], QtGui.QImage.Format_RGB888)
+                    self.image_update.emit(image)
+                elif isinstance(image, QtGui.QImage):
+                    self.image_update.emit(image)
+                elif isinstance(image, QtGui.QPixmap):
+                    self.image_update.emit(image.toImage())
+                # matplotlib figure
+                elif isinstance(image, matplotlib.figure.Figure):
+                    buf = io.BytesIO()
+                    image.savefig(buf, format='png')
+                    buf.seek(0)
+                    qimage = QtGui.QImage()
+                    qimage.loadFromData(buf.read())
+                    self.image_update.emit(qimage)
+
             self.set_property('Locals', locals_added_by_this_node)
             self.set_property('State', 'Success')
         else:
@@ -197,3 +231,4 @@ class ScriptNode(QObject, BaseNode):
             self.set_property('State', 'Error')
 
             raise ScriptNodeExecutionError(f"Error at {self.name()}. See console for details.")
+    

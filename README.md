@@ -19,3 +19,5 @@ On windows you may need to install the latest graphviz and run:
 
 ### Run
     > cypress
+
+![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_2.png)
