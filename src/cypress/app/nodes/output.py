@@ -71,7 +71,7 @@ class SimpleOutputNode(BaseNode):
 
         self._node_widget.cwidget.checkbox.stateChanged.connect(self.allow_send_to_console)
 
-        self.watched_node = None
+        self.source_node: ScriptNode = None
 
         self.outvar = ScriptNode.SCRIPT_OUTVAR
         self._node_widget.cwidget.selected_outvar.textChanged.connect(self.update_outvar)
@@ -79,35 +79,42 @@ class SimpleOutputNode(BaseNode):
         self.console_variable = "context"
         self._node_widget.cwidget.console_variable.textChanged.connect(self.update_console_variable)
 
-    def on_input_connected(self, in_port, out_port):
-        self.watched_node = out_port.node()
+    def set_source_node(self, node):
+        self.source_node = node
 
-        self.watched_node.execution_update.connect(self.update_output)
+        self.source_node.execution_update.connect(self.update_output)
 
-    def on_input_disconnected(self, in_port, out_port):
-        if self.watched_node is None:
+    def unset_source_node(self):
+        if self.source_node is None:
             return
         
-        self.watched_node.execution_update.disconnect(self.update_output)
-        self.watched_node = None
+        self.source_node.execution_update.disconnect(self.update_output)
 
+    def on_input_connected(self, in_port, out_port):
+        self.set_source_node(out_port.node())
+
+    def on_input_disconnected(self, in_port, out_port):
+        self.unset_source_node()
+        
     @Slot(object)
     def update_output(self, context):
+        print(self.source_node, context)
         self.context = context
         self._node_widget.set_value(str(context[self.outvar]))
 
     def allow_send_to_console(self, state):
+        watched_node = self.input(0).connected_ports()[0].node()
         if state == Qt.Checked:
-            self.watched_node.execution_update.connect(self.send_to_console)
+            watched_node.execution_update.connect(self.send_to_console)
         else:
-            self.watched_node.execution_update.disconnect(self.send_to_console)
+            watched_node.execution_update.disconnect(self.send_to_console)
 
     @Slot(object)
     def send_to_console(self, context):    
         # embed context in jupyter kernel
         import pickle
         pickle_context = pickle.dumps(context)
-        kernel_script = f"import pickle\n{self.console_variable} = pickle.loads({pickle_context})"
+        kernel_script = f"import pickle\n{self.console_variable} = pickle.loads({pickle_context})\nNone"
         self.graph.kernel_client.execute(kernel_script)
 
     def get_from_console(self):

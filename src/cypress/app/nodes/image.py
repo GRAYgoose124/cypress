@@ -8,6 +8,8 @@ from qtpy import QtWidgets, QtGui, QtCore
 from qtpy.QtCore import Slot
 from qtpy.QtGui import QImage
 
+from cypress.app.nodes.script import ScriptNode
+
 
 class ImageGraphicsWidget(QtWidgets.QGraphicsView):
     def __init__(self, parent=None, image=None):
@@ -88,9 +90,11 @@ class ImageNode(BaseNode):
     __identifier__ = 'cypress.nodes'
     NODE_NAME = 'Image'
 
+    CHAINED_PORT_IN = ScriptNode.CHAINED_PORT_IN
+
     def __init__(self):
         super(ImageNode, self).__init__()
-        self.add_input('in')
+        self.add_input(self.CHAINED_PORT_IN)
 
         self.source_node = None
 

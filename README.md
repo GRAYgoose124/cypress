@@ -4,7 +4,7 @@ Cypress is a simple node-based Python editor.
 
 ![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_1.png)
 
-It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node editor, and `Qt.py` for Qt bindings. 
+It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node editor, and `Qt.py` for Qt bindings.
 
 ## Installation
     > poetry install
@@ -12,7 +12,7 @@ It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node 
 with pyside2:
     > poetry install [-E pyside2]
 
-On windows you may need to install the latest graphviz and install pygraphviz with something akin to:
+On windows you may need to install the latest Graphviz to your PATH and install pygraphviz with something akin to:
 
     pip install --global-option=build_ext --global-option="-IC:\Program Files\Graphviz\include" --global-option="-LC:\Program Files\Graphviz\lib" pygraphviz
 
@@ -20,5 +20,10 @@ On windows you may need to install the latest graphviz and install pygraphviz wi
 
 ### Run
     > cypress
+
+#### Usage
+Most useful, `TAB` will allow you to add nodes and the right-click context menu will allow you to discover other shortcuts. Double click a node to add it to the properties view.
+
+- Output nodes can be used to extract results and send them to the embedded iPython
 
 ![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_2.png)

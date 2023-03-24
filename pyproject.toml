@@ -12,7 +12,7 @@ numpy = "^1.23.5"
 matplotlib = "^3.6.2"
 
 qt-py = "^1.3.8"
-nodegraphqt = {git = "https://github.com/jchanvfx/NodeGraphQt.git"}
+nodegraphqt = {git = "https://github.com/GRAYgoose124/NodeGraphQt.git"}
 qtconsole = {git = "https://github.com/jupyter/qtconsole.git"}
 
 pyside2 = {version = "^5.15.2.1", extras = ["pyside2"]}
