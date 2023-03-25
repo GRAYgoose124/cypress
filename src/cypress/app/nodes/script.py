@@ -9,7 +9,6 @@ import types
 import matplotlib
 import matplotlib.figure
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from qtpy import QtWidgets, QtGui
@@ -99,6 +98,7 @@ class ScriptNode(QObject, BaseNode):
         self.create_property('stdout', value=None,
                              tab='Execution', widget_type=NodePropWidgetEnum.QTEXT_EDIT.value)
 
+        self.input_var = None
         self._last_executed = None
 
         self._text_widget = NodeTextAreaWidget(self.view)
@@ -130,7 +130,7 @@ class ScriptNode(QObject, BaseNode):
     def execute(self):
         """ Execute the script. """
         try:
-            context = self.execute_tree()
+            context = self.execute_tree(self.input_var)
         except ScriptNodeExecutionError as e:
             logger.error(e.args[0])
             return
@@ -153,6 +153,10 @@ class ScriptNode(QObject, BaseNode):
         self.set_property('Results', str(results))
         self.set_property('Context', str(context))
 
+    @Slot(object)
+    def update_input_var(self, ctx):
+        self.input_var = ctx
+
     # executable
     def execute_tree(self, ctx=None):
         """ Execute the tree flowing into this node with a unified context. """
@@ -160,15 +164,24 @@ class ScriptNode(QObject, BaseNode):
         if ctx is not None:
             context = ctx
         else:
-            # Set the execution ID for this tree.
+            context = {}
+
+        # Update context from all SimpleInputNodes.
+        for node in self.connected_input_nodes()[self.inputs()[ScriptNode.CHAINED_PORT_IN]]:
+            if node.__class__.__name__ == 'SimpleInputNode':
+                varname, value = node._node_widget.get_value(), self.input_var
+                context[varname] = value
+
+        if '__execution_id' not in context:
             exe_id = f"{random.randint(0, 1000000)}{str(time.time_ns())[-10:]}".encode('utf-8')
             exe_id = codecs.encode(exe_id, 'base64').decode('utf-8')
 
-            context = {ScriptNode.SCRIPT_OUTVAR: None, '__execution_id': exe_id}
+            context.update({ScriptNode.SCRIPT_OUTVAR: None, '__execution_id': exe_id})
 
         # Execute all input nodes prior to this node's execution
         for node in self.code_inputs:
-            node.execute_tree(ctx=context)
+            if isinstance(node, ScriptNode):
+                node.execute_tree(ctx=context)
 
         self.execute_node(context)
 

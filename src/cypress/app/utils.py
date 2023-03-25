@@ -13,6 +13,11 @@ def build_demo_graph(graph: NodeGraph):
         s3 = create_node(3, [800, 0])
         s3b = create_node("3B", [800, 200])
 
+        in_node = graph.create_node(
+            'cypress.nodes.SimpleInputNode', name='Input', pos=[0, 300])
+        
+        s1.set_input(0, in_node.output(0))
+
         output = graph.create_node(
             'cypress.nodes.SimpleOutputNode', name='Output', pos=[800, 600])
 
@@ -29,7 +34,7 @@ fig = plt.figure()
 fig.add_subplot(111).plot(np.random.rand(10))
 """
 
-        s1.code = "print('Hello from Script Node 1!')\na=5"
+        s1.code = "print('Hello from Script Node 1!')\na=5\n\n#print(Input)"
         s2.code = "print('Hello from Script Node 2!')\nb=10"
         s3.code = "print('Hello from Script Node 3!')\nc=a+b\nprint(c)" + demo_matplotlib_figure
 

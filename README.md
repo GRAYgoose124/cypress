@@ -2,7 +2,7 @@
 
 Cypress is a simple node-based Python editor.
 
-![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_1.png)
+![](https://raw.githubusercontent.com/GRAYgoose124/cypress/main/screenshots/cypress_3.png)
 
 It utilizes [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt) for the node editor, and `Qt.py` for Qt bindings.
 

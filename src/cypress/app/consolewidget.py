@@ -17,7 +17,7 @@ def make_jupyter_widget_with_kernel(manager=None):
         kernel_manager = manager
 
     kernel_client = kernel_manager.client()
-    kernel_client.start_channels()
+    kernel_client.start_channels(shell=True)
 
     jupyter_widget = RichJupyterWidget()
     jupyter_widget.kernel_manager = kernel_manager
