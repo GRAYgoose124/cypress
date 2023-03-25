@@ -65,7 +65,11 @@ class CypressWindow(QtWidgets.QMainWindow):
             #QConsoleNode   # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
         ])
 
-        build_demo_graph(self.graph)   
+        # build_demo_graph(self.graph)   
+        try:
+            self.graph.load_session(str((Path(__file__).parent / 'example_sessions' / 'wavelet.json')))
+        except OSError:
+            print("No example session found.")
    
         def display_properties_bin(node):
             if not self.propbins_widget.isVisible():
