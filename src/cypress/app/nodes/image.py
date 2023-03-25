@@ -64,16 +64,18 @@ class NodeImageWidget(NodeBaseWidget):
 
     def set_value(self, value: bytes | str):
         if value is None:
-            return
-        elif isinstance(value, bytes):
-            self.image_array = value
-        elif isinstance(value, str):
-            # value is a string-encoded bytes object, so we need to decode it
-            self.image_array = codecs.decode(value.encode('utf-8'), 'base64')
+            image = QImage()
         else:
-            raise ValueError('value must be bytes or str-encoded bytes, not {}'.format(type(value)))
-        
-        image = QImage.fromData(self.image_array)
+            if isinstance(value, bytes):
+                self.image_array = value
+            elif isinstance(value, str):
+                # value is a string-encoded bytes object, so we need to decode it
+                self.image_array = codecs.decode(value.encode('utf-8'), 'base64')
+            else:
+                raise ValueError('value must be bytes or str-encoded bytes, not {}'.format(type(value)))
+            
+            image = QImage.fromData(self.image_array)
+            
         self.cwidget.internal_image = image
         self.cwidget.update()
 

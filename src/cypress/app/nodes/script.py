@@ -76,7 +76,7 @@ class ScriptNode(QObject, BaseNode):
     SCRIPT_OUTIMAGE = 'Image'
 
     execution_update = Signal(object)
-    image_update = Signal(bytes)
+    image_update = Signal(bytes or None)
 
     def __init__(self):
         QObject.__init__(self)
@@ -205,6 +205,7 @@ class ScriptNode(QObject, BaseNode):
             
         already_created_vars = list(context.keys())
         prior_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
+        prior_image = context.get(ScriptNode.SCRIPT_OUTIMAGE, None)
         success = None
 
         # Try to execute this node.
@@ -221,24 +222,25 @@ class ScriptNode(QObject, BaseNode):
 
         if success:
             # Locals added to the context at this node.
-            locals_added_by_this_node = {k: context[k] for k in context.keys() if k not in already_created_vars and k != '__builtins__'}
+            locals_added_by_this_node = {k: context[k] for k in context.keys() if k not in already_created_vars and k != '__builtins__' and k != 'Image'}
 
             # If the output variable has changed, add it to the locals for this node.
             new_results = context.get(ScriptNode.SCRIPT_OUTVAR, None)
             if prior_results != new_results:
                 locals_added_by_this_node[ScriptNode.SCRIPT_OUTVAR] = new_results
 
-            # Update image output for Image Node
-            if ScriptNode.SCRIPT_OUTIMAGE in context:
-                image = context[ScriptNode.SCRIPT_OUTIMAGE]
-                if isinstance(image, np.ndarray):
-                    self.image_update.emit(image)
+            new_image = context.get(ScriptNode.SCRIPT_OUTIMAGE, None)
+            if new_image != prior_image:
+                if isinstance(new_image, np.ndarray):
+                    self.image_update.emit(new_image)
                 # matplotlib figure
-                elif isinstance(image, matplotlib.figure.Figure):
+                elif isinstance(new_image, matplotlib.figure.Figure):
                     buf = io.BytesIO()
-                    image.savefig(buf, format='png')
+                    new_image.savefig(buf, format='png')
                     buf.seek(0)
                     self.image_update.emit(buf.read())
+                else:
+                    self.image_update.emit(None)
 
             self.set_property('Locals', str(locals_added_by_this_node))
             self.set_property('State', 'Success')
