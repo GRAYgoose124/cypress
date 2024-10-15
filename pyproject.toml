@@ -7,14 +7,15 @@ readme = "README.md"
 packages = [{include = "cypress", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = "^3.10,<3.11"
+
 numpy = "^1.23.5"
 matplotlib = "^3.6.2"
 
 qtpy = "^2.3.0"
 pyside2 = {version = "^5.15.2.1", extras = ["pyside2"]}
-nodegraphqt = {git = "https://github.com/GRAYgoose124/NodeGraphQt.git"}
 qtconsole = {git = "https://github.com/jupyter/qtconsole.git"}
+nodegraphqt = "^0.6.38"
 
 [build-system]
 requires = ["poetry-core"]

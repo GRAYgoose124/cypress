@@ -63,9 +63,9 @@ def save_session(graph):
     current = graph.current_session()
     if current:
         graph.save_session(current)
-        msg = 'Session layout saved:\n{}'.format(current)
+        msg = "Session layout saved:\n{}".format(current)
         viewer = graph.viewer()
-        viewer.message_dialog(msg, title='Session Saved')
+        viewer.message_dialog(msg, title="Session Saved")
     else:
         save_session_as(graph)
 
@@ -78,13 +78,13 @@ def save_session_as(graph):
     file_path = graph.save_dialog(current)
     if file_path:
         graph.save_session(file_path)
-    
+
 
 def new_session(graph):
     """
     Prompts a warning dialog to new a node graph session.
     """
-    if graph.question_dialog('Clear Current Session?', 'Clear Session'):
+    if graph.question_dialog("Clear Current Session?", "Clear Session"):
         graph.clear_session()
 
 
@@ -93,8 +93,8 @@ def clear_undo(graph):
     Prompts a warning dialog to clear undo.
     """
     viewer = graph.viewer()
-    msg = 'Clear all undo history, Are you sure?'
-    if viewer.question_dialog('Clear Undo History', msg):
+    msg = "Clear all undo history, Are you sure?"
+    if viewer.question_dialog("Clear Undo History", msg):
         graph.clear_undo_stack()
 
 
@@ -184,6 +184,7 @@ def curved_pipe(graph):
     Set node graph pipes layout as curved.
     """
     from NodeGraphQt.constants import PipeLayoutEnum
+
     graph.set_pipe_style(PipeLayoutEnum.CURVED.value)
 
 
@@ -192,6 +193,7 @@ def straight_pipe(graph):
     Set node graph pipes layout as straight.
     """
     from NodeGraphQt.constants import PipeLayoutEnum
+
     graph.set_pipe_style(PipeLayoutEnum.STRAIGHT.value)
 
 
@@ -200,6 +202,7 @@ def angle_pipe(graph):
     Set node graph pipes layout as angled.
     """
     from NodeGraphQt.constants import PipeLayoutEnum
+
     graph.set_pipe_style(PipeLayoutEnum.ANGLE.value)
 
 
@@ -208,6 +211,7 @@ def bg_grid_none(graph):
     Turn off the background patterns.
     """
     from NodeGraphQt.constants import ViewerEnum
+
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_NONE.value)
 
 
@@ -216,6 +220,7 @@ def bg_grid_dots(graph):
     Set background node graph background with grid dots.
     """
     from NodeGraphQt.constants import ViewerEnum
+
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_DOTS.value)
 
 
@@ -224,6 +229,7 @@ def bg_grid_lines(graph):
     Set background node graph background with grid lines.
     """
     from NodeGraphQt.constants import ViewerEnum
+
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_LINES.value)
 
 

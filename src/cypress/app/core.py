@@ -8,7 +8,7 @@ from NodeGraphQt import (
     NodeGraph,
     PropertiesBinWidget,
     NodesTreeWidget,
-    NodesPaletteWidget
+    NodesPaletteWidget,
 )
 
 from cypress.app.utils import build_demo_graph
@@ -18,18 +18,20 @@ from cypress.app.nodes import *
 
 
 class CypressWindow(QtWidgets.QMainWindow):
-    """ Main application class. """
+    """Main application class."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle('Cypress')
+        self.setWindowTitle("Cypress")
 
         self.graph = NodeGraph()
         self.console_widget = make_jupyter_widget_with_kernel()
         self.graph.kernel_manager = self.console_widget.kernel_manager
-        self.graph.kernel_client                                              = self.console_widget.kernel_client
-        
-        bootstrap_script = Path(__file__).parent / 'scripts' / 'kernel_bootstrap.py.format'
+        self.graph.kernel_client = self.console_widget.kernel_client
+
+        bootstrap_script = (
+            Path(__file__).parent / "scripts" / "kernel_bootstrap.py.format"
+        )
         bootstrap_script = bootstrap_script.read_text().format()
 
         self.console_widget.kernel_client.execute(bootstrap_script, silent=True)
@@ -43,8 +45,8 @@ class CypressWindow(QtWidgets.QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
 
         tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(self.console_widget, 'Console')
-        tab_widget.addTab(PropertiesBinWidget(node_graph=self.graph), 'Properties')
+        tab_widget.addTab(self.console_widget, "Console")
+        tab_widget.addTab(PropertiesBinWidget(node_graph=self.graph), "Properties")
 
         layout.addWidget(self.graph.widget)
         layout.addWidget(tab_widget)
@@ -55,17 +57,20 @@ class CypressWindow(QtWidgets.QMainWindow):
 
     def setup(self):
         self.graph.set_context_menu_from_file(
-            Path(__file__).parent / 'hotkeys/hotkeys.json')
+            str(Path(__file__).parent / "hotkeys" / "hotkeys.json")
+        )
 
-        self.graph.register_nodes([
-            ScriptNode,
-            SimpleOutputNode,
-            ImageNode
-            #QConsoleNode   # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
-        ])
+        self.graph.register_nodes(
+            [
+                ScriptNode,
+                SimpleOutputNode,
+                ImageNode,
+                # QConsoleNode   # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
+            ]
+        )
 
-        build_demo_graph(self.graph)   
-   
+        build_demo_graph(self.graph)
+
         def display_properties_bin(node):
             if not self.propbins_widget.isVisible():
                 self.propbins_widget.show()
