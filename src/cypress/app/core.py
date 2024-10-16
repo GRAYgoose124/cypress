@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from qtpy import QtWidgets, QtCore
-from qtpy.QtWidgets import QWidget
+from qtpy.QtWidgets import QWidget, QSplitter
 
 from NodeGraphQt import (
     NodeGraph,
@@ -15,6 +15,25 @@ from cypress.app.utils import build_demo_graph
 from cypress.app.consolewidget import make_jupyter_widget_with_kernel
 
 from cypress.app.nodes import *
+
+
+class CollapsibleWidget(QtWidgets.QWidget):
+    def __init__(self, content_widget, title="Collapsible Widget"):
+        super().__init__()
+        self.content_widget = content_widget
+        self.toggle_button = QtWidgets.QPushButton(title)
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.setChecked(True)
+        self.toggle_button.clicked.connect(self.toggle_content)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.toggle_button)
+        layout.addWidget(self.content_widget)
+        self.setLayout(layout)
+
+    def toggle_content(self):
+        self.content_widget.setVisible(self.toggle_button.isChecked())
 
 
 class CypressWindow(QtWidgets.QMainWindow):
@@ -36,24 +55,33 @@ class CypressWindow(QtWidgets.QMainWindow):
 
         self.console_widget.kernel_client.execute(bootstrap_script, silent=True)
 
-        self.console_widget.setWindowFlags(QtCore.Qt.Tool)
+        self.propbins_widget = PropertiesBinWidget(parent=None, node_graph=self.graph)
 
-        self.propbins_widget = PropertiesBinWidget(node_graph=self.graph)
-        self.propbins_widget.setWindowFlags(QtCore.Qt.Tool)
+        # Create main splitter
+        main_splitter = QSplitter(QtCore.Qt.Horizontal)
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Add graph widget to the left side of the splitter
+        main_splitter.addWidget(self.graph.widget)
 
-        tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(self.console_widget, "Console")
-        tab_widget.addTab(PropertiesBinWidget(node_graph=self.graph), "Properties")
+        # Create right side widget
+        right_widget = QWidget()
+        right_layout = QtWidgets.QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addWidget(self.graph.widget)
-        layout.addWidget(tab_widget)
+        # Create collapsible console widget
+        collapsible_console = CollapsibleWidget(self.console_widget, "Console")
+        right_layout.addWidget(collapsible_console)
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+        # Add properties widget
+        right_layout.addWidget(self.propbins_widget)
+
+        # Add right widget to the main splitter
+        main_splitter.addWidget(right_widget)
+
+        # Set initial sizes (adjust as needed)
+        main_splitter.setSizes([600, 400])
+
+        self.setCentralWidget(main_splitter)
 
     def setup(self):
         self.graph.set_context_menu_from_file(
@@ -72,9 +100,9 @@ class CypressWindow(QtWidgets.QMainWindow):
         build_demo_graph(self.graph)
 
         def display_properties_bin(node):
-            if not self.propbins_widget.isVisible():
-                self.propbins_widget.show()
-                self.propbins_widget.raise_()
+            # This function is now redundant as the properties bin is always visible
+            # but we'll keep it for potential future use
+            pass
 
         self.graph.node_double_clicked.connect(display_properties_bin)
 
