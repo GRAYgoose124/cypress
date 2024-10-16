@@ -8,7 +8,8 @@ from cypress.app.nodes.script import ScriptNode
 
 
 class SimpleOutputWidget(QtWidgets.QWidget):
-    """ Simple output widget. """
+    """Simple output widget."""
+
     def __init__(self, parent=None):
         super(SimpleOutputWidget, self).__init__(parent)
 
@@ -46,7 +47,7 @@ class SimpleOutputWidget(QtWidgets.QWidget):
 
 class NodeSimpleOutputWidget(NodeBaseWidget):
     def __init__(self, parent=None):
-        super(NodeSimpleOutputWidget, self).__init__(parent, name='Result')
+        super(NodeSimpleOutputWidget, self).__init__(parent, name="Result")
         self.set_custom_widget(SimpleOutputWidget())
         self.cwidget = self.get_custom_widget()
 
@@ -55,11 +56,11 @@ class NodeSimpleOutputWidget(NodeBaseWidget):
 
     def get_value(self):
         return self.cwidget._result_label.text()
-    
+
 
 class SimpleOutputNode(BaseNode):
-    __identifier__ = 'cypress.nodes'
-    NODE_NAME = 'SimpleOutput'
+    __identifier__ = "cypress.nodes"
+    NODE_NAME = "SimpleOutput"
 
     CHAINED_PORT_IN = ScriptNode.CHAINED_PORT_IN
 
@@ -70,15 +71,21 @@ class SimpleOutputNode(BaseNode):
         self._node_widget = NodeSimpleOutputWidget(self.view)
         self.add_custom_widget(self._node_widget)
 
-        self._node_widget.cwidget.checkbox.stateChanged.connect(self.allow_send_to_console)
+        self._node_widget.cwidget.checkbox.stateChanged.connect(
+            self.allow_send_to_console
+        )
 
         self.source_node: ScriptNode = None
 
         self.outvar = ScriptNode.SCRIPT_OUTVAR
-        self._node_widget.cwidget.selected_outvar.textChanged.connect(self.update_outvar)
+        self._node_widget.cwidget.selected_outvar.textChanged.connect(
+            self.update_outvar
+        )
 
         self.console_variable = "context"
-        self._node_widget.cwidget.console_variable.textChanged.connect(self.update_console_variable)
+        self._node_widget.cwidget.console_variable.textChanged.connect(
+            self.update_console_variable
+        )
 
     def set_source_node(self, node):
         self.source_node = node
@@ -88,7 +95,7 @@ class SimpleOutputNode(BaseNode):
     def unset_source_node(self):
         if self.source_node is None:
             return
-        
+
         self.source_node.execution_update.disconnect(self.update_output)
 
     def on_input_connected(self, in_port, out_port):
@@ -110,12 +117,18 @@ class SimpleOutputNode(BaseNode):
             watched_node.execution_update.disconnect(self.send_to_console)
 
     @Slot(object)
-    def send_to_console(self, context):    
+    def send_to_console(self, context):
         # embed context in jupyter kernel
         import pickle
+
         pickle_context = pickle.dumps(context)
-        script_format_str = (Path(__file__).parent.parent / "scripts" / "embed_context.py.format").read_text()
-        kernel_script = script_format_str.format(output_var=self.console_variable, ctx=pickle_context)
+        # TODO: To utils
+        script_format_str = (
+            Path(__file__).parent.parent / "scripts" / "embed_context.py.format"
+        ).read_text()
+        kernel_script = script_format_str.format(
+            output_var=self.console_variable, ctx=pickle_context
+        )
 
         self.graph.kernel_client.execute(kernel_script, silent=True)
 

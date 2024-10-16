@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from qtpy import QtWidgets, QtCore
@@ -11,8 +10,7 @@ from NodeGraphQt import (
     NodesPaletteWidget,
 )
 
-from cypress.app.utils import build_demo_graph
-from cypress.app.consolewidget import make_jupyter_widget_with_kernel
+from cypress.app.utils import build_demo_graph, make_jupyter_widget_with_kernel
 
 from cypress.app.nodes import *
 
@@ -47,13 +45,6 @@ class CypressWindow(QtWidgets.QMainWindow):
         self.console_widget = make_jupyter_widget_with_kernel()
         self.graph.kernel_manager = self.console_widget.kernel_manager
         self.graph.kernel_client = self.console_widget.kernel_client
-
-        bootstrap_script = (
-            Path(__file__).parent / "scripts" / "kernel_bootstrap.py.format"
-        )
-        bootstrap_script = bootstrap_script.read_text().format()
-
-        self.console_widget.kernel_client.execute(bootstrap_script, silent=True)
 
         self.propbins_widget = PropertiesBinWidget(parent=None, node_graph=self.graph)
 
@@ -93,7 +84,7 @@ class CypressWindow(QtWidgets.QMainWindow):
                 ScriptNode,
                 SimpleOutputNode,
                 ImageNode,
-                # QConsoleNode   # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
+                QConsoleNode,  # TODO: Broken, for some reason can't get an ioloop_thread from within NodeGraph.
             ]
         )
 
@@ -104,7 +95,12 @@ class CypressWindow(QtWidgets.QMainWindow):
             # but we'll keep it for potential future use
             pass
 
+        def on_node_created(node):
+            if hasattr(node, "on_node_created"):
+                node.on_node_created()
+
         self.graph.node_double_clicked.connect(display_properties_bin)
+        self.graph.node_created.connect(on_node_created)
 
         return self
 
